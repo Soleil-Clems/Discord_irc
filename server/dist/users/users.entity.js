@@ -37,11 +37,12 @@ __decorate([
     __metadata("design:type", String)
 ], Users.prototype, "lastname", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ length: 500 }),
+    (0, typeorm_1.Column)({ length: 500, unique: true }),
     __metadata("design:type", String)
 ], Users.prototype, "username", void 0);
 __decorate([
     (0, typeorm_1.Column)({ length: 500 }),
+    (0, typeorm_1.Unique)('UQ_USER_EMAIL', ['email']),
     __metadata("design:type", String)
 ], Users.prototype, "email", void 0);
 __decorate([
@@ -49,7 +50,7 @@ __decorate([
     __metadata("design:type", String)
 ], Users.prototype, "password", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'datetime', name: 'last_seen' }),
+    (0, typeorm_1.Column)({ type: 'datetime', name: 'last_seen', nullable: true }),
     __metadata("design:type", Date)
 ], Users.prototype, "lastSeen", void 0);
 __decorate([
@@ -61,7 +62,7 @@ __decorate([
     __metadata("design:type", Date)
 ], Users.prototype, "updatedAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'is_active', default: false }),
+    (0, typeorm_1.Column)({ name: 'is_active', default: true }),
     __metadata("design:type", Boolean)
 ], Users.prototype, "isActive", void 0);
 exports.Users = Users = __decorate([

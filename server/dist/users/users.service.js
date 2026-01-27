@@ -14,31 +14,82 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
 const users_entity_1 = require("./users.entity");
-const typeorm_1 = require("typeorm");
-const typeorm_2 = require("@nestjs/typeorm");
 let UsersService = class UsersService {
     userRepository;
     constructor(userRepository) {
         this.userRepository = userRepository;
     }
-    create(createUserDto) {
-        return createUserDto;
+    async create(createUserDto) {
+        try {
+            const user = this.userRepository.create(createUserDto);
+            return await this.userRepository.save(user);
+        }
+        catch (error) {
+            if (error.code === 'ER_DUP_ENTRY') {
+                throw new common_1.ConflictException('Un utilisateur avec cet email existe déjà');
+            }
+            throw new common_1.InternalServerErrorException("Une erreur est survenue lors de la création de l'utilisateur");
+        }
     }
-    findAll() {
-        return `This action returns all users lol`;
+    async findAll() {
+        try {
+            return await this.userRepository.find();
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException('Une erreur est survenue lors de la récupération des utilisateurs');
+        }
     }
-    findOne(id) {
-        return `This action returns a #${id} user`;
+    async findOne(id) {
+        try {
+            const user = await this.userRepository.findOne({ where: { id } });
+            if (!user) {
+                throw new common_1.NotFoundException('Utilisateur non trouvé');
+            }
+            return user;
+        }
+        catch (error) {
+            if (error instanceof common_1.NotFoundException) {
+                throw error;
+            }
+            throw new common_1.InternalServerErrorException("Une erreur est survenue lors de la récupération de l'utilisateur");
+        }
     }
-    remove(id) {
-        return `This action removes a #${id} user`;
+    async update(id, updateUserDto) {
+        try {
+            const user = await this.findOne(id);
+            Object.assign(user, updateUserDto);
+            return await this.userRepository.save(user);
+        }
+        catch (error) {
+            if (error instanceof common_1.NotFoundException) {
+                throw error;
+            }
+            if (error.code === 'ER_DUP_ENTRY') {
+                throw new common_1.ConflictException('Un utilisateur avec cet email existe déjà');
+            }
+            throw new common_1.InternalServerErrorException("Une erreur est survenue lors de la mise à jour de l'utilisateur");
+        }
+    }
+    async remove(id) {
+        try {
+            const user = await this.findOne(id);
+            await this.userRepository.remove(user);
+        }
+        catch (error) {
+            if (error instanceof common_1.NotFoundException) {
+                throw error;
+            }
+            throw new common_1.InternalServerErrorException("Une erreur est survenue lors de la suppression de l'utilisateur");
+        }
     }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_2.InjectRepository)(users_entity_1.Users)),
-    __metadata("design:paramtypes", [typeorm_1.Repository])
+    __param(0, (0, typeorm_1.InjectRepository)(users_entity_1.Users)),
+    __metadata("design:paramtypes", [typeorm_2.Repository])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

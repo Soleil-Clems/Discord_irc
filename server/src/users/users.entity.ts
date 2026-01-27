@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity()
@@ -17,16 +18,17 @@ export class Users {
   @Column({ length: 500 })
   lastname: string;
 
-  @Column({ length: 500 })
+  @Column({ length: 500, unique: true })
   username: string;
 
   @Column({ length: 500 })
+  @Unique('UQ_USER_EMAIL', ['email'])
   email: string;
 
   @Column({ length: 500 })
   password: string;
 
-  @Column({ type: 'datetime', name: 'last_seen' })
+  @Column({ type: 'datetime', name: 'last_seen', nullable: true })
   lastSeen: Date;
 
   @CreateDateColumn({ name: 'created_at' })
@@ -35,6 +37,6 @@ export class Users {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @Column({ name: 'is_active', default: false })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 }

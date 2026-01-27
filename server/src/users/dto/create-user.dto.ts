@@ -1,5 +1,5 @@
 // import { IsDate } from 'class-validator';
-import { IsString } from 'class-validator';
+import { IsEmail, IsString } from 'class-validator';
 // import { Type } from 'class-transformer';
 
 export class CreateUserDto {
@@ -9,7 +9,7 @@ export class CreateUserDto {
   lastname: string;
   @IsString()
   username: string;
-  @IsString()
+  @IsEmail()
   email: string;
   @IsString()
   password: string;
