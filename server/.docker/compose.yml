@@ -1,32 +1,40 @@
 
 services:
-  todo-app:
+  lezom-server:
+    container_name: ${COMPOSE_PROJECT_NAME}-server
     build: 
       context: ..
       dockerfile: .docker/Dockerfile
     ports:
       - "8080:8080"
     environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: root
-      DB_PASSWORD: root
-      DB_NAME: todo_db
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy  
 
   mysql:
+    container_name: ${COMPOSE_PROJECT_NAME}-mysql
     image: mysql:8
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: todo_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
     volumes:
-      - mysql-data:/var/lib/mysql
+      - lezom-mysql-data:/var/lib/mysql
     ports:
       - "3306:3306"
+    healthcheck:  
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   phpmyadmin:
+    container_name: ${COMPOSE_PROJECT_NAME}-phpmyadmin
     image: phpmyadmin:latest
     restart: always
     ports:
@@ -38,4 +46,4 @@ services:
       - mysql
 
 volumes:
-  mysql-data:
+  lezom-mysql-data:

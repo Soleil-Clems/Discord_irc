@@ -6,21 +6,22 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci
+RUN npm install
 
 COPY . .
-RUN npm run build
+RUN npm i
+# RUN npm run build
 
-FROM node:${NODE_VERSION}-alpine AS production
+# FROM node:${NODE_VERSION}-alpine AS production
 
-WORKDIR /app
+# WORKDIR /app
 
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist/ ./dist
+# COPY --from=builder /app/package*.json ./
+# COPY --from=builder /app/node_modules ./node_modules
+# COPY --from=builder /app/dist/ ./dist
 
 EXPOSE 8080
 
-CMD ["node", "dist/main"]
+CMD ["npm", "run", "start:dev"]
 
 
