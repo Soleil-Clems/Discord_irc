@@ -22,6 +22,9 @@ let UsersService = class UsersService {
     constructor(userRepository) {
         this.userRepository = userRepository;
     }
+    create(createUserDto) {
+        return createUserDto;
+    }
     findAll() {
         return `This action returns all users lol`;
     }
