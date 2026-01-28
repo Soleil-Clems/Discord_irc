@@ -12,6 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { EmailParamDto } from './dto/email-param.dto';
 
 @Controller('users')
 export class UsersController {
@@ -22,13 +23,28 @@ export class UsersController {
     return this.usersService.create(createUserDto);
   }
 
+  @Get(':email')
+  findByEmail(
+    @Param()
+    params: EmailParamDto,
+  ) {
+    const result = this.usersService.findOneByEmail(params.email);
+    return result;
+  }
+
   @Get()
   findAll() {
     return this.usersService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    id: number,
+  ) {
     return this.usersService.findOne(+id);
   }
 

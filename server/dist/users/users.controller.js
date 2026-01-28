@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const users_service_1 = require("./users.service");
 const create_user_dto_1 = require("./dto/create-user.dto");
 const update_user_dto_1 = require("./dto/update-user.dto");
+const email_param_dto_1 = require("./dto/email-param.dto");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -24,6 +25,10 @@ let UsersController = class UsersController {
     }
     create(createUserDto) {
         return this.usersService.create(createUserDto);
+    }
+    findByEmail(params) {
+        const result = this.usersService.findOneByEmail(params.email);
+        return result;
     }
     findAll() {
         return this.usersService.findAll();
@@ -50,6 +55,13 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "create", null);
 __decorate([
+    (0, common_1.Get)(':email'),
+    __param(0, (0, common_1.Param)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [email_param_dto_1.EmailParamDto]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "findByEmail", null);
+__decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -57,9 +69,9 @@ __decorate([
 ], UsersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Param)('id', new common_1.ParseIntPipe({ errorHttpStatusCode: common_1.HttpStatus.NOT_ACCEPTABLE }))),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findOne", null);
 __decorate([

@@ -21,7 +21,7 @@ export class Users {
   @Column({ length: 500, unique: true })
   username: string;
 
-  @Column({ length: 500 })
+  @Column({ length: 500, unique: true })
   @Unique('UQ_USER_EMAIL', ['email'])
   email: string;
 

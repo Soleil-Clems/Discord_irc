@@ -41,7 +41,7 @@ __decorate([
     __metadata("design:type", String)
 ], Users.prototype, "username", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ length: 500 }),
+    (0, typeorm_1.Column)({ length: 500, unique: true }),
     (0, typeorm_1.Unique)('UQ_USER_EMAIL', ['email']),
     __metadata("design:type", String)
 ], Users.prototype, "email", void 0);
