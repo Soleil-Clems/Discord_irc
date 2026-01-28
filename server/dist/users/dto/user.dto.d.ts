@@ -1,3 +1,4 @@
+import { Role } from '../enums/roles.enum';
 export declare class UserDto {
     id: number;
     firstname: string;
@@ -9,4 +10,5 @@ export declare class UserDto {
     createdAt: Date;
     updatedAt: Date;
     isActive: boolean;
+    role: Role;
 }

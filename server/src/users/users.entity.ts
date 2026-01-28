@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   Unique,
 } from 'typeorm';
+import { Role } from './enums/roles.enum';
 
 @Entity()
 export class Users {
@@ -39,4 +40,11 @@ export class Users {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: Role,
+    default: Role.User,
+  })
+  role: Role;
 }

@@ -20,6 +20,9 @@ const update_user_dto_1 = require("./dto/update-user.dto");
 const email_param_dto_1 = require("./dto/email-param.dto");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const public_decorator_1 = require("../auth/decorators/public.decorator");
+const roles_decorator_1 = require("./decorators/roles.decorator");
+const roles_guard_1 = require("./guards/roles.guard");
+const roles_enum_1 = require("./enums/roles.enum");
 let UsersController = class UsersController {
     usersService;
     constructor(usersService) {
@@ -65,6 +68,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findByEmail", null);
 __decorate([
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.Admin),
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -93,7 +97,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "remove", null);
 exports.UsersController = UsersController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Controller)('users'),
     __metadata("design:paramtypes", [users_service_1.UsersService])
 ], UsersController);

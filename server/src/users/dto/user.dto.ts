@@ -5,8 +5,10 @@ import {
   IsBoolean,
   IsNumber,
   IsOptional,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Role } from '../enums/roles.enum';
 
 export class UserDto {
   @IsNumber()
@@ -41,4 +43,7 @@ export class UserDto {
 
   @IsBoolean()
   isActive: boolean;
+
+  @IsEnum(Role)
+  role: Role;
 }

@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
+const roles_enum_1 = require("../enums/roles.enum");
 class UserDto {
     id;
     firstname;
@@ -23,6 +24,7 @@ class UserDto {
     createdAt;
     updatedAt;
     isActive;
+    role;
 }
 exports.UserDto = UserDto;
 __decorate([
@@ -68,4 +70,8 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UserDto.prototype, "isActive", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(roles_enum_1.Role),
+    __metadata("design:type", String)
+], UserDto.prototype, "role", void 0);
 //# sourceMappingURL=user.dto.js.map

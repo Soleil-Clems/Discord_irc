@@ -16,8 +16,11 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { EmailParamDto } from './dto/email-param.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { Roles } from './decorators/roles.decorator';
+import { RolesGuard } from './guards/roles.guard';
+import { Role } from './enums/roles.enum';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -37,6 +40,7 @@ export class UsersController {
     return result;
   }
 
+  @Roles(Role.Admin)
   @Get()
   findAll() {
     return this.usersService.findAll();

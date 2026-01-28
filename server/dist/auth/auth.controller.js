@@ -32,7 +32,6 @@ let AuthController = class AuthController {
         };
     }
     getProfile(req) {
-        console.log(req);
         return req.user;
     }
 };
