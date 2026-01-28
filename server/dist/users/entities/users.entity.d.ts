@@ -1,4 +1,5 @@
-import { Role } from './enums/roles.enum';
+import { Role } from '../enums/roles.enum';
+import { ServerMember } from '../../servers/entities/server-member.entity';
 export declare class Users {
     id: number;
     firstname: string;
@@ -11,4 +12,5 @@ export declare class Users {
     updatedAt: Date;
     isActive: boolean;
     role: Role;
+    serverMemberships: ServerMember[];
 }

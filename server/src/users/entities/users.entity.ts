@@ -5,8 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Unique,
+  OneToMany,
 } from 'typeorm';
-import { Role } from './enums/roles.enum';
+import { Role } from '../enums/roles.enum';
+import { ServerMember } from '../../servers/entities/server-member.entity';
 
 @Entity()
 export class Users {
@@ -47,4 +49,7 @@ export class Users {
     default: Role.User,
   })
   role: Role;
+
+  @OneToMany(() => ServerMember, (sm) => sm.members)
+  serverMemberships: ServerMember[];
 }

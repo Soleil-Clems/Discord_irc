@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { Users } from './users.entity';
+import { Users } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 export declare class UsersService {
