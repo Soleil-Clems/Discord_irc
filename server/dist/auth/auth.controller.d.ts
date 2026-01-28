@@ -1,12 +1,14 @@
 import { AuthService } from './auth.service';
+import { UserDto } from 'src/users/dto/user.dto';
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
     login(req: any): {
         access_token: string;
+        user: UserDto;
     };
-    logout(req: any): Promise<{
+    logout(): {
         message: string;
-    }>;
+    };
     getProfile(req: any): any;
 }

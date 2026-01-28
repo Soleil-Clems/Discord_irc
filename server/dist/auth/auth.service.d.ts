@@ -8,5 +8,6 @@ export declare class AuthService {
     validateUser(email: string, password: string): Promise<UserDto | null>;
     login(user: UserDto): {
         access_token: string;
+        user: UserDto;
     };
 }

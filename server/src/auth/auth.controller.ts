@@ -15,7 +15,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -28,29 +28,16 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Request() req) {
-    try {
-      await new Promise((resolve, reject) => {
-        req.logout((err) => {
-          if (err) {
-            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-            reject(err);
-          } else {
-            resolve(true);
-          }
-        });
-      });
-
-      return { message: 'Déconnexion réussie' };
-    } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-      throw new InternalServerErrorException('Erreur lors de la déconnexion');
-    }
+  logout() {
+    return {
+      message: 'Déconnexion réussie',
+    };
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req) {
+    console.log(req);
     return req.user;
   }
 }

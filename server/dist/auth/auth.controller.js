@@ -26,26 +26,13 @@ let AuthController = class AuthController {
         const user = req.user;
         return this.authService.login(user);
     }
-    async logout(req) {
-        try {
-            await new Promise((resolve, reject) => {
-                req.logout((err) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    else {
-                        resolve(true);
-                    }
-                });
-            });
-            return { message: 'Déconnexion réussie' };
-        }
-        catch (error) {
-            console.error('Erreur lors de la déconnexion:', error);
-            throw new common_1.InternalServerErrorException('Erreur lors de la déconnexion');
-        }
+    logout() {
+        return {
+            message: 'Déconnexion réussie',
+        };
     }
     getProfile(req) {
+        console.log(req);
         return req.user;
     }
 };
@@ -62,10 +49,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)('logout'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
 ], AuthController.prototype, "logout", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
