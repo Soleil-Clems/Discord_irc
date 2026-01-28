@@ -26,6 +26,12 @@ let ServersController = class ServersController {
     async create(req, createServerDto) {
         return await this.serversService.create(createServerDto, req.user.id);
     }
+    async findAll() {
+        return await this.serversService.findAll();
+    }
+    async find(id) {
+        return await this.serversService.findOne(id);
+    }
 };
 exports.ServersController = ServersController;
 __decorate([
@@ -36,6 +42,19 @@ __decorate([
     __metadata("design:paramtypes", [Object, create_server_dto_1.CreateServerDto]),
     __metadata("design:returntype", Promise)
 ], ServersController.prototype, "create", null);
+__decorate([
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ServersController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id', new common_1.ParseIntPipe({ errorHttpStatusCode: common_1.HttpStatus.NOT_ACCEPTABLE }))),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Promise)
+], ServersController.prototype, "find", null);
 exports.ServersController = ServersController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Controller)('servers'),

@@ -4,4 +4,6 @@ export declare class ServersController {
     private readonly serversService;
     constructor(serversService: ServersService);
     create(req: any, createServerDto: CreateServerDto): Promise<import("./entities/server.entity").Server>;
+    findAll(): Promise<import("./entities/server.entity").Server[]>;
+    find(id: number): Promise<import("./entities/server.entity").Server>;
 }

@@ -9,7 +9,7 @@ export declare class ServersService {
     private serverMemberRepository;
     constructor(userRepository: Repository<Users>, serverRepository: Repository<Server>, serverMemberRepository: Repository<ServerMember>);
     create(createServerDto: CreateServerDto, userId: number): Promise<Server>;
-    findAll(): string;
-    findOne(id: number): string;
+    findAll(): Promise<Server[]>;
+    findOne(id: number): Promise<Server>;
     remove(id: number): string;
 }

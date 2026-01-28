@@ -1,6 +1,16 @@
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
 import { RolesGuard } from '@/users/guards/roles.guard';
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateServerDto } from './dto/create-server.dto';
 import { ServersService } from './servers.service';
 
@@ -12,5 +22,21 @@ export class ServersController {
   @Post('create')
   async create(@Request() req, @Body() createServerDto: CreateServerDto) {
     return await this.serversService.create(createServerDto, req.user.id);
+  }
+
+  @Get()
+  async findAll() {
+    return await this.serversService.findAll();
+  }
+
+  @Get(':id')
+  async find(
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    id: number,
+  ) {
+    return await this.serversService.findOne(id);
   }
 }

@@ -43,8 +43,19 @@ export class ServersService {
     return await this.serverRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} server`;
+  async findOne(id: number) {
+    const server = await this.serverRepository.findOne({
+      where: { id },
+      relations: {
+        memberships: true,
+      },
+    });
+
+    if (!server) {
+      throw new NotFoundException('Serveur non trouvé');
+    }
+
+    return server;
   }
 
   // update(id: number, updateServerDto: UpdateServerDto) {

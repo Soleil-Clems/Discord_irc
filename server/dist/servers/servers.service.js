@@ -45,11 +45,20 @@ let ServersService = class ServersService {
         await this.serverMemberRepository.save(memberships);
         return server;
     }
-    findAll() {
-        return `This action returns all servers`;
+    async findAll() {
+        return await this.serverRepository.find();
     }
-    findOne(id) {
-        return `This action returns a #${id} server`;
+    async findOne(id) {
+        const server = await this.serverRepository.findOne({
+            where: { id },
+            relations: {
+                memberships: true,
+            },
+        });
+        if (!server) {
+            throw new common_1.NotFoundException('Serveur non trouvé');
+        }
+        return server;
     }
     remove(id) {
         return `This action removes a #${id} server`;
