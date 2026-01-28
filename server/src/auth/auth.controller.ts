@@ -5,7 +5,6 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
-  InternalServerErrorException,
   Get,
 } from '@nestjs/common';
 import { LocalAuthGuard } from './local.auth.guard';
@@ -15,7 +14,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -37,7 +36,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req) {
-    console.log(req);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return req.user;
   }
 }
