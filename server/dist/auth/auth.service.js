@@ -41,18 +41,26 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("../users/users.service");
 const bcrypt = __importStar(require("bcrypt"));
 const jwt_1 = require("@nestjs/jwt");
+const typeorm_1 = require("@nestjs/typeorm");
+const users_entity_1 = require("../users/entities/users.entity");
+const typeorm_2 = require("typeorm");
 let AuthService = class AuthService {
     usersService;
     jwtService;
-    constructor(usersService, jwtService) {
+    userRepository;
+    constructor(usersService, jwtService, userRepository) {
         this.usersService = usersService;
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
     async validateUser(email, password) {
         const user = await this.usersService.findOneByEmail(email);
@@ -66,8 +74,14 @@ let AuthService = class AuthService {
         const { password: _pass, ...result } = user;
         return result;
     }
-    login(user) {
+    async login(user) {
         const payload = user;
+        const userEntity = await this.userRepository.findOneBy({ id: user.id });
+        if (!userEntity) {
+            throw new Error('User not found');
+        }
+        userEntity.lastSeen = new Date();
+        await this.userRepository.save(userEntity);
         return {
             access_token: this.jwtService.sign(payload),
             user: user,
@@ -77,7 +91,9 @@ let AuthService = class AuthService {
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
+    __param(2, (0, typeorm_1.InjectRepository)(users_entity_1.Users)),
     __metadata("design:paramtypes", [users_service_1.UsersService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        typeorm_2.Repository])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map
