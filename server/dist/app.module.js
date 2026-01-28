@@ -12,7 +12,6 @@ const typeorm_1 = require("@nestjs/typeorm");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 const servers_module_1 = require("./servers/servers.module");
-const servers_controller_1 = require("./servers/servers.controller");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -33,7 +32,6 @@ exports.AppModule = AppModule = __decorate([
             auth_module_1.AuthModule,
             servers_module_1.ServersModule,
         ],
-        controllers: [servers_controller_1.ServersController],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

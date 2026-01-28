@@ -17,10 +17,14 @@ const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_guard_1 = require("../users/guards/roles.guard");
 const common_1 = require("@nestjs/common");
 const create_server_dto_1 = require("./dto/create-server.dto");
+const servers_service_1 = require("./servers.service");
 let ServersController = class ServersController {
-    create(req, createServerDto) {
-        console.log(req.user);
-        return createServerDto;
+    serversService;
+    constructor(serversService) {
+        this.serversService = serversService;
+    }
+    async create(req, createServerDto) {
+        return await this.serversService.create(createServerDto, req.user.id);
     }
 };
 exports.ServersController = ServersController;
@@ -30,10 +34,11 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, create_server_dto_1.CreateServerDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], ServersController.prototype, "create", null);
 exports.ServersController = ServersController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, common_1.Controller)('servers')
+    (0, common_1.Controller)('servers'),
+    __metadata("design:paramtypes", [servers_service_1.ServersService])
 ], ServersController);
 //# sourceMappingURL=servers.controller.js.map

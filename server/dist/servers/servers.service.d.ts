@@ -1,9 +1,15 @@
 import { CreateServerDto } from './dto/create-server.dto';
-import { UpdateServerDto } from './dto/update-server.dto';
+import { Users } from '@/users/entities/users.entity';
+import { Repository } from 'typeorm';
+import { Server } from './entities/server.entity';
+import { ServerMember } from './entities/server-member.entity';
 export declare class ServersService {
-    create(createServerDto: CreateServerDto): string;
+    private userRepository;
+    private serverRepository;
+    private serverMemberRepository;
+    constructor(userRepository: Repository<Users>, serverRepository: Repository<Server>, serverMemberRepository: Repository<ServerMember>);
+    create(createServerDto: CreateServerDto, userId: number): Promise<Server>;
     findAll(): string;
     findOne(id: number): string;
-    update(id: number, updateServerDto: UpdateServerDto): string;
     remove(id: number): string;
 }
