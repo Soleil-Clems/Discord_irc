@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { ServerMember } from './server-member.entity';
+import { Channel } from '@/channels/entities/channel.entity';
 
 @Entity()
 export class Server {
@@ -24,4 +25,7 @@ export class Server {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+
+  @OneToMany(() => Channel, (channel) => channel.server)
+  channels: Channel[];
 }
