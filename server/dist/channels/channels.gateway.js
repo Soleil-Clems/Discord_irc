@@ -9,16 +9,18 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateServerDto = void 0;
-const mapped_types_1 = require("@nestjs/mapped-types");
-const create_server_dto_1 = require("./create-server.dto");
-const class_validator_1 = require("class-validator");
-class UpdateServerDto extends (0, mapped_types_1.PartialType)(create_server_dto_1.CreateServerDto) {
-    name;
-}
-exports.UpdateServerDto = UpdateServerDto;
-__decorate([
-    (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
-], UpdateServerDto.prototype, "name", void 0);
-//# sourceMappingURL=update-server.dto.js.map
+exports.ChannelsGateway = void 0;
+const websockets_1 = require("@nestjs/websockets");
+const channels_service_1 = require("./channels.service");
+let ChannelsGateway = class ChannelsGateway {
+    channelsService;
+    constructor(channelsService) {
+        this.channelsService = channelsService;
+    }
+};
+exports.ChannelsGateway = ChannelsGateway;
+exports.ChannelsGateway = ChannelsGateway = __decorate([
+    (0, websockets_1.WebSocketGateway)(),
+    __metadata("design:paramtypes", [channels_service_1.ChannelsService])
+], ChannelsGateway);
+//# sourceMappingURL=channels.gateway.js.map

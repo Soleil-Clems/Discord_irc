@@ -9,16 +9,25 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateServerDto = void 0;
-const mapped_types_1 = require("@nestjs/mapped-types");
-const create_server_dto_1 = require("./create-server.dto");
+exports.CreateChannelDto = void 0;
 const class_validator_1 = require("class-validator");
-class UpdateServerDto extends (0, mapped_types_1.PartialType)(create_server_dto_1.CreateServerDto) {
+const channel_type_enum_1 = require("../enums/channel-type.enum");
+class CreateChannelDto {
     name;
+    serverId;
+    type;
 }
-exports.UpdateServerDto = UpdateServerDto;
+exports.CreateChannelDto = CreateChannelDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateServerDto.prototype, "name", void 0);
-//# sourceMappingURL=update-server.dto.js.map
+], CreateChannelDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateChannelDto.prototype, "serverId", void 0);
+__decorate([
+    (0, class_validator_1.IsEnum)(channel_type_enum_1.ChannelType),
+    __metadata("design:type", String)
+], CreateChannelDto.prototype, "type", void 0);
+//# sourceMappingURL=create-channel.dto.js.map

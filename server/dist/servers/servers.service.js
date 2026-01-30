@@ -62,6 +62,9 @@ let ServersService = class ServersService {
                 memberships: {
                     members: true,
                 },
+                channels: {
+                    server: false,
+                },
             },
         });
         if (!server) {
@@ -125,7 +128,6 @@ let ServersService = class ServersService {
         return this.serverMemberRepository.save(member);
     }
     async changeMemberRole(serverId, requesterId, targetMemberId, role) {
-        console.log(serverId, requesterId, targetMemberId, role);
         const requester = await this.serverMemberRepository.findOne({
             where: {
                 server: { id: serverId },

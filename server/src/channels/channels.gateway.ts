@@ -1,38 +1,38 @@
 import {
   WebSocketGateway,
-  SubscribeMessage,
-  MessageBody,
+  // SubscribeMessage,
+  // MessageBody,
 } from '@nestjs/websockets';
 import { ChannelsService } from './channels.service';
-import { CreateChannelDto } from './dto/create-channel.dto';
-import { UpdateChannelDto } from './dto/update-channel.dto';
+// import { CreateChannelDto } from './dto/create-channel.dto';
+// import { UpdateChannelDto } from './dto/update-channel.dto';
 
 @WebSocketGateway()
 export class ChannelsGateway {
   constructor(private readonly channelsService: ChannelsService) {}
 
-  @SubscribeMessage('createChannel')
-  create(@MessageBody() createChannelDto: CreateChannelDto) {
-    return this.channelsService.create(createChannelDto);
-  }
+  // @SubscribeMessage('createChannel')
+  // create(@MessageBody() createChannelDto: CreateChannelDto) {
+  //   return this.channelsService.create(createChannelDto);
+  // }
 
-  @SubscribeMessage('findAllChannels')
-  findAll() {
-    return this.channelsService.findAll();
-  }
+  // @SubscribeMessage('findAllChannels')
+  // findAll() {
+  //   return this.channelsService.findAll();
+  // }
 
-  @SubscribeMessage('findOneChannel')
-  findOne(@MessageBody() id: number) {
-    return this.channelsService.findOne(id);
-  }
+  // @SubscribeMessage('findOneChannel')
+  // findOne(@MessageBody() id: number) {
+  //   return this.channelsService.findOne(id);
+  // }
 
-  @SubscribeMessage('updateChannel')
-  update(@MessageBody() updateChannelDto: UpdateChannelDto) {
-    return this.channelsService.update(updateChannelDto.id, updateChannelDto);
-  }
+  // @SubscribeMessage('updateChannel')
+  // update(@MessageBody() updateChannelDto: UpdateChannelDto) {
+  //   return this.channelsService.update(updateChannelDto.id, updateChannelDto);
+  // }
 
-  @SubscribeMessage('removeChannel')
-  remove(@MessageBody() id: number) {
-    return this.channelsService.remove(id);
-  }
+  // @SubscribeMessage('removeChannel')
+  // remove(@MessageBody() id: number) {
+  //   return this.channelsService.remove(id);
+  // }
 }

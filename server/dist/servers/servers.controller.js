@@ -41,7 +41,6 @@ let ServersController = class ServersController {
         return this.serversService.remove(id, req.user.id);
     }
     changeRole(req, serverId, dto) {
-        console.log(dto);
         return this.serversService.changeMemberRole(serverId, req.user.id, dto.memberId, dto.role);
     }
     join(req, serverId) {

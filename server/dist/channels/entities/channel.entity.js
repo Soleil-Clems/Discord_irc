@@ -9,44 +9,45 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Server = void 0;
+exports.Channel = void 0;
 const typeorm_1 = require("typeorm");
-const server_member_entity_1 = require("./server-member.entity");
-const channel_entity_1 = require("../../channels/entities/channel.entity");
-let Server = class Server {
+const channel_type_enum_1 = require("../enums/channel-type.enum");
+const server_entity_1 = require("../../servers/entities/server.entity");
+let Channel = class Channel {
     id;
     name;
-    memberships;
+    type;
+    server;
     createdAt;
-    updatedAt;
-    channels;
 };
-exports.Server = Server;
+exports.Channel = Channel;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
-], Server.prototype, "id", void 0);
+], Channel.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ length: 500 }),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Server.prototype, "name", void 0);
+], Channel.prototype, "name", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => server_member_entity_1.ServerMember, (sm) => sm.server),
-    __metadata("design:type", Array)
-], Server.prototype, "memberships", void 0);
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: channel_type_enum_1.ChannelType,
+        default: channel_type_enum_1.ChannelType.Text,
+    }),
+    __metadata("design:type", String)
+], Channel.prototype, "type", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)({ name: 'created_at' }),
+    (0, typeorm_1.ManyToOne)(() => server_entity_1.Server, (server) => server.channels, {
+        onDelete: 'CASCADE',
+    }),
+    __metadata("design:type", server_entity_1.Server)
+], Channel.prototype, "server", void 0);
+__decorate([
+    (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], Server.prototype, "createdAt", void 0);
-__decorate([
-    (0, typeorm_1.UpdateDateColumn)({ name: 'updated_at' }),
-    __metadata("design:type", Date)
-], Server.prototype, "updatedAt", void 0);
-__decorate([
-    (0, typeorm_1.OneToMany)(() => channel_entity_1.Channel, (channel) => channel.server),
-    __metadata("design:type", Array)
-], Server.prototype, "channels", void 0);
-exports.Server = Server = __decorate([
-    (0, typeorm_1.Entity)()
-], Server);
-//# sourceMappingURL=server.entity.js.map
+], Channel.prototype, "createdAt", void 0);
+exports.Channel = Channel = __decorate([
+    (0, typeorm_1.Entity)('channel')
+], Channel);
+//# sourceMappingURL=channel.entity.js.map

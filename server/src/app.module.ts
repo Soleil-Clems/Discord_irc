@@ -4,6 +4,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ServersModule } from './servers/servers.module';
 import { ChannelsModule } from './channels/channels.module';
+import { MessagesModule } from './messages/messages.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -20,6 +21,7 @@ import { ChannelsModule } from './channels/channels.module';
     AuthModule,
     ServersModule,
     ChannelsModule,
+    MessagesModule,
   ],
 })
 export class AppModule {}

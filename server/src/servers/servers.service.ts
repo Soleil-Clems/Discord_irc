@@ -66,6 +66,9 @@ export class ServersService {
         memberships: {
           members: true,
         },
+        channels: {
+          server: false,
+        },
       },
     });
 
