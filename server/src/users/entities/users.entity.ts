@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Role } from '../enums/roles.enum';
 import { ServerMember } from '../../servers/entities/server-member.entity';
+import { Message } from '@/messages/entities/message.entity';
 
 @Entity()
 export class Users {
@@ -52,4 +53,7 @@ export class Users {
 
   @OneToMany(() => ServerMember, (sm) => sm.members)
   serverMemberships: ServerMember[];
+
+  @OneToMany(() => Message, (message) => message.author)
+  messages: Message[];
 }

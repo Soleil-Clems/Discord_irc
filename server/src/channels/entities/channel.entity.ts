@@ -3,10 +3,12 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ChannelType } from '../enums/channel-type.enum';
 import { Server } from '@/servers/entities/server.entity';
+import { Message } from '@/messages/entities/message.entity';
 
 @Entity('channel')
 export class Channel {
@@ -27,6 +29,9 @@ export class Channel {
     onDelete: 'CASCADE',
   })
   server: Server;
+
+  @OneToMany(() => Message, (message) => message.channel)
+  messages: Message[];
 
   @CreateDateColumn()
   createdAt: Date;

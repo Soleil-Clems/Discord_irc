@@ -13,6 +13,7 @@ exports.Users = void 0;
 const typeorm_1 = require("typeorm");
 const roles_enum_1 = require("../enums/roles.enum");
 const server_member_entity_1 = require("../../servers/entities/server-member.entity");
+const message_entity_1 = require("../../messages/entities/message.entity");
 let Users = class Users {
     id;
     firstname;
@@ -26,6 +27,7 @@ let Users = class Users {
     isActive;
     role;
     serverMemberships;
+    messages;
 };
 exports.Users = Users;
 __decorate([
@@ -81,6 +83,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => server_member_entity_1.ServerMember, (sm) => sm.members),
     __metadata("design:type", Array)
 ], Users.prototype, "serverMemberships", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => message_entity_1.Message, (message) => message.author),
+    __metadata("design:type", Array)
+], Users.prototype, "messages", void 0);
 exports.Users = Users = __decorate([
     (0, typeorm_1.Entity)()
 ], Users);

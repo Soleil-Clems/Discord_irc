@@ -9,51 +9,53 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Channel = void 0;
+exports.Message = void 0;
 const typeorm_1 = require("typeorm");
-const channel_type_enum_1 = require("../enums/channel-type.enum");
-const server_entity_1 = require("../../servers/entities/server.entity");
-const message_entity_1 = require("../../messages/entities/message.entity");
-let Channel = class Channel {
+const users_entity_1 = require("../../users/entities/users.entity");
+const channel_entity_1 = require("../../channels/entities/channel.entity");
+const message_type_enum_1 = require("../enums/message-type.enum");
+let Message = class Message {
     id;
-    name;
+    content;
     type;
-    server;
-    messages;
+    author;
+    channel;
     createdAt;
 };
-exports.Channel = Channel;
+exports.Message = Message;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
-], Channel.prototype, "id", void 0);
+], Message.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
+    (0, typeorm_1.Column)('text'),
     __metadata("design:type", String)
-], Channel.prototype, "name", void 0);
+], Message.prototype, "content", void 0);
 __decorate([
     (0, typeorm_1.Column)({
         type: 'enum',
-        enum: channel_type_enum_1.ChannelType,
-        default: channel_type_enum_1.ChannelType.Text,
+        enum: message_type_enum_1.MessageType,
+        default: message_type_enum_1.MessageType.Text,
     }),
     __metadata("design:type", String)
-], Channel.prototype, "type", void 0);
+], Message.prototype, "type", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => server_entity_1.Server, (server) => server.channels, {
+    (0, typeorm_1.ManyToOne)(() => users_entity_1.Users, (user) => user.messages, {
         onDelete: 'CASCADE',
     }),
-    __metadata("design:type", server_entity_1.Server)
-], Channel.prototype, "server", void 0);
+    __metadata("design:type", users_entity_1.Users)
+], Message.prototype, "author", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => message_entity_1.Message, (message) => message.channel),
-    __metadata("design:type", Array)
-], Channel.prototype, "messages", void 0);
+    (0, typeorm_1.ManyToOne)(() => channel_entity_1.Channel, (channel) => channel.messages, {
+        onDelete: 'CASCADE',
+    }),
+    __metadata("design:type", channel_entity_1.Channel)
+], Message.prototype, "channel", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
-], Channel.prototype, "createdAt", void 0);
-exports.Channel = Channel = __decorate([
-    (0, typeorm_1.Entity)('channel')
-], Channel);
-//# sourceMappingURL=channel.entity.js.map
+], Message.prototype, "createdAt", void 0);
+exports.Message = Message = __decorate([
+    (0, typeorm_1.Entity)()
+], Message);
+//# sourceMappingURL=message.entity.js.map
