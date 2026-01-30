@@ -5,7 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Unique,
+  OneToMany,
 } from 'typeorm';
+import { Role } from '../enums/roles.enum';
+import { ServerMember } from '../../servers/entities/server-member.entity';
+import { Message } from '@/messages/entities/message.entity';
 
 @Entity()
 export class Users {
@@ -21,7 +25,7 @@ export class Users {
   @Column({ length: 500, unique: true })
   username: string;
 
-  @Column({ length: 500 })
+  @Column({ length: 500, unique: true })
   @Unique('UQ_USER_EMAIL', ['email'])
   email: string;
 
@@ -39,4 +43,17 @@ export class Users {
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: Role,
+    default: Role.User,
+  })
+  role: Role;
+
+  @OneToMany(() => ServerMember, (sm) => sm.members)
+  serverMemberships: ServerMember[];
+
+  @OneToMany(() => Message, (message) => message.author)
+  messages: Message[];
 }

@@ -10,6 +10,10 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const users_module_1 = require("./users/users.module");
+const auth_module_1 = require("./auth/auth.module");
+const servers_module_1 = require("./servers/servers.module");
+const channels_module_1 = require("./channels/channels.module");
+const messages_module_1 = require("./messages/messages.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -27,6 +31,10 @@ exports.AppModule = AppModule = __decorate([
                 synchronize: true,
             }),
             users_module_1.UsersModule,
+            auth_module_1.AuthModule,
+            servers_module_1.ServersModule,
+            channels_module_1.ChannelsModule,
+            messages_module_1.MessagesModule,
         ],
     })
 ], AppModule);

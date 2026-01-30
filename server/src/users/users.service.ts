@@ -6,9 +6,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Users } from './users.entity';
+import { Users } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt';
+
+const saltOrRounds = parseInt(process.env.SALT || '10', 10);
 
 @Injectable()
 export class UsersService {
@@ -19,6 +22,8 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto): Promise<Users> {
     try {
+      const hash = await bcrypt.hash(createUserDto.password, saltOrRounds);
+      createUserDto.password = hash;
       const user = this.userRepository.create(createUserDto);
       return await this.userRepository.save(user);
     } catch (error) {
@@ -63,6 +68,26 @@ export class UsersService {
       );
     }
   }
+  async findOneByEmail(email: string): Promise<Users> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { email },
+      });
+
+      if (!user) {
+        throw new NotFoundException('Utilisateur non trouvé');
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        "Une erreur est survenue lors de la récupération de l'utilisateur",
+      );
+    }
+  }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<Users> {
     try {
@@ -87,10 +112,11 @@ export class UsersService {
     }
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number): Promise<{ message: string; error: boolean }> {
     try {
       const user = await this.findOne(id);
       await this.userRepository.remove(user);
+      return { message: 'Utilisateur supprimé avec succès', error: false };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;

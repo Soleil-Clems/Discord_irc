@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-
+import { AuthModule } from './auth/auth.module';
+import { ServersModule } from './servers/servers.module';
+import { ChannelsModule } from './channels/channels.module';
+import { MessagesModule } from './messages/messages.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -15,6 +18,10 @@ import { UsersModule } from './users/users.module';
       synchronize: true,
     }),
     UsersModule,
+    AuthModule,
+    ServersModule,
+    ChannelsModule,
+    MessagesModule,
   ],
 })
 export class AppModule {}
