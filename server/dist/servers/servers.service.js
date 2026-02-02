@@ -47,13 +47,7 @@ let ServersService = class ServersService {
         return server;
     }
     async findAll() {
-        return this.serverRepository.find({
-            relations: {
-                memberships: {
-                    members: false,
-                },
-            },
-        });
+        return this.serverRepository.find();
     }
     async findOne(serverId) {
         const server = await this.serverRepository.findOne({

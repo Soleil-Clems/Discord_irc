@@ -50,13 +50,7 @@ export class ServersService {
   }
 
   async findAll() {
-    return this.serverRepository.find({
-      relations: {
-        memberships: {
-          members: false,
-        },
-      },
-    });
+    return this.serverRepository.find();
   }
 
   async findOne(serverId: number) {
