@@ -28,11 +28,11 @@ let ServersController = class ServersController {
     async create(req, createServerDto) {
         return this.serversService.create(createServerDto, req.user.id);
     }
-    async findAll() {
-        return this.serversService.findAll();
+    async findAll(req) {
+        return this.serversService.findAll(req.user.id);
     }
-    async findOne(id) {
-        return this.serversService.findOne(id);
+    async findOne(req, id) {
+        return this.serversService.findOne(id, req.user.id);
     }
     async update(req, id, updateServerDto) {
         return this.serversService.update(id, updateServerDto, req.user.id);
@@ -61,15 +61,17 @@ __decorate([
 ], ServersController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], ServersController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id', new common_1.ParseIntPipe({ errorHttpStatusCode: common_1.HttpStatus.NOT_ACCEPTABLE }))),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id', new common_1.ParseIntPipe({ errorHttpStatusCode: common_1.HttpStatus.NOT_ACCEPTABLE }))),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
+    __metadata("design:paramtypes", [Object, Number]),
     __metadata("design:returntype", Promise)
 ], ServersController.prototype, "findOne", null);
 __decorate([

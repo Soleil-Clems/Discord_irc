@@ -69,6 +69,9 @@ let ChannelsService = class ChannelsService {
             where: { id: channelId },
             relations: {
                 server: true,
+                messages: {
+                    author: true,
+                },
             },
         });
         if (!channel) {

@@ -80,6 +80,9 @@ export class ChannelsService {
       where: { id: channelId },
       relations: {
         server: true,
+        messages: {
+          author: true,
+        },
       },
     });
 

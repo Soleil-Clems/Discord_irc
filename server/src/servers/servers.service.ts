@@ -49,20 +49,43 @@ export class ServersService {
     return server;
   }
 
-  async findAll() {
-    return this.serverRepository.find();
+  async findAll(userId: number) {
+    const memberships = await this.serverMemberRepository.find({
+      where: {
+        members: { id: userId },
+      },
+      relations: {
+        server: {
+          channels: true,
+          memberships: {
+            members: true,
+          },
+        },
+      },
+    });
+
+    return memberships.map((membership) => membership.server);
   }
 
-  async findOne(serverId: number) {
+  async findOne(serverId: number, userId: number) {
+    const membership = await this.serverMemberRepository.findOne({
+      where: {
+        server: { id: serverId },
+        members: { id: userId },
+      },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException('Vous ne faites pas partie de ce serveur');
+    }
+
     const server = await this.serverRepository.findOne({
       where: { id: serverId },
       relations: {
         memberships: {
           members: true,
         },
-        channels: {
-          server: false,
-        },
+        channels: true,
       },
     });
 
@@ -178,8 +201,7 @@ export class ServersService {
     }
 
     target.role = role;
-    // return this.serverMemberRepository.save(target);
-    return target;
+    return this.serverMemberRepository.save(target);
   }
 
   async leaveServer(serverId: number, userId: number, newOwnerId?: number) {
