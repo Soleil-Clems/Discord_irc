@@ -52,7 +52,7 @@ __decorate([
     __metadata("design:type", String)
 ], Users.prototype, "email", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ length: 500, select: false }),
+    (0, typeorm_1.Column)({ length: 500 }),
     __metadata("design:type", String)
 ], Users.prototype, "password", void 0);
 __decorate([

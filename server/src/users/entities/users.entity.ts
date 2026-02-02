@@ -29,7 +29,7 @@ export class Users {
   @Unique('UQ_USER_EMAIL', ['email'])
   email: string;
 
-  @Column({ length: 500, select: false })
+  @Column({ length: 500 })
   password: string;
 
   @Column({ type: 'datetime', name: 'last_seen', nullable: true })
