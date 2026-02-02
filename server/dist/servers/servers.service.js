@@ -50,7 +50,7 @@ let ServersService = class ServersService {
         return this.serverRepository.find({
             relations: {
                 memberships: {
-                    members: true,
+                    members: false,
                 },
             },
         });
