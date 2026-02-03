@@ -53,14 +53,19 @@ const jwt_1 = require("@nestjs/jwt");
 const typeorm_1 = require("@nestjs/typeorm");
 const users_entity_1 = require("../users/entities/users.entity");
 const typeorm_2 = require("typeorm");
+const refresh_token_entity_1 = require("./entities/refresh-token.entity");
+const uuid_1 = require("uuid");
+const constant_1 = require("./constant");
 let AuthService = class AuthService {
     usersService;
     jwtService;
     userRepository;
-    constructor(usersService, jwtService, userRepository) {
+    refreshTokenRepository;
+    constructor(usersService, jwtService, userRepository, refreshTokenRepository) {
         this.usersService = usersService;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
     async validateUser(email, password) {
         const user = await this.usersService.findOneByEmail(email);
@@ -74,26 +79,110 @@ let AuthService = class AuthService {
         const { password: _pass, ...result } = user;
         return result;
     }
+    generateAccessToken(user) {
+        const payload = { ...user };
+        return this.jwtService.sign(payload);
+    }
+    async generateRefreshToken(userId) {
+        const token = (0, uuid_1.v4)();
+        const tokenHash = await bcrypt.hash(token, 10);
+        const expiresAt = new Date(Date.now() + constant_1.jwtConstants.refreshTokenExpiresInMs);
+        const refreshToken = this.refreshTokenRepository.create({
+            tokenHash,
+            userId,
+            expiresAt,
+        });
+        await this.refreshTokenRepository.save(refreshToken);
+        return token;
+    }
     async login(user) {
-        const payload = user;
         const userEntity = await this.userRepository.findOneBy({ id: user.id });
         if (!userEntity) {
             throw new Error('User not found');
         }
         userEntity.lastSeen = new Date();
         await this.userRepository.save(userEntity);
+        const accessToken = this.generateAccessToken(user);
+        const refreshToken = await this.generateRefreshToken(user.id);
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            expires_in: 300,
             user: user,
         };
+    }
+    async refreshTokens(refreshTokenValue) {
+        const tokens = await this.refreshTokenRepository.find({
+            where: { isRevoked: false },
+            relations: ['user'],
+        });
+        let matchedToken = null;
+        for (const token of tokens) {
+            const isMatch = await bcrypt.compare(refreshTokenValue, token.tokenHash);
+            if (isMatch) {
+                matchedToken = token;
+                break;
+            }
+        }
+        if (!matchedToken) {
+            throw new common_1.UnauthorizedException('Invalid refresh token');
+        }
+        if (matchedToken.expiresAt < new Date()) {
+            matchedToken.isRevoked = true;
+            await this.refreshTokenRepository.save(matchedToken);
+            throw new common_1.UnauthorizedException('Refresh token has expired');
+        }
+        const user = matchedToken.user;
+        if (!user) {
+            throw new common_1.UnauthorizedException('User not found');
+        }
+        const { password: _pass, ...userDto } = user;
+        const accessToken = this.generateAccessToken(userDto);
+        return {
+            access_token: accessToken,
+            refresh_token: refreshTokenValue,
+            expires_in: 300,
+            user: userDto,
+        };
+    }
+    async revokeAllUserTokens(userId) {
+        await this.refreshTokenRepository.update({ userId, isRevoked: false }, { isRevoked: true });
+    }
+    async logout(userId, refreshTokenValue) {
+        if (refreshTokenValue) {
+            const tokens = await this.refreshTokenRepository.find({
+                where: { userId, isRevoked: false },
+            });
+            for (const token of tokens) {
+                const isMatch = await bcrypt.compare(refreshTokenValue, token.tokenHash);
+                if (isMatch) {
+                    token.isRevoked = true;
+                    await this.refreshTokenRepository.save(token);
+                    return { message: 'Déconnexion réussie' };
+                }
+            }
+        }
+        return { message: 'Déconnexion réussie' };
+    }
+    async logoutAll(userId) {
+        await this.revokeAllUserTokens(userId);
+        return { message: 'Déconnexion de tous les appareils réussie' };
+    }
+    async cleanupExpiredTokens() {
+        const result = await this.refreshTokenRepository.delete({
+            expiresAt: (0, typeorm_2.LessThan)(new Date()),
+        });
+        return result.affected || 0;
     }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __param(2, (0, typeorm_1.InjectRepository)(users_entity_1.Users)),
+    __param(3, (0, typeorm_1.InjectRepository)(refresh_token_entity_1.RefreshToken)),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         jwt_1.JwtService,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

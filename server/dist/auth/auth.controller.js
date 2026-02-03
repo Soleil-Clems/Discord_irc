@@ -17,19 +17,50 @@ const common_1 = require("@nestjs/common");
 const local_auth_guard_1 = require("./local.auth.guard");
 const auth_service_1 = require("./auth.service");
 const jwt_auth_guard_1 = require("./jwt-auth.guard");
+const logout_dto_1 = require("./dto/logout.dto");
+const constant_1 = require("./constant");
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
         this.authService = authService;
     }
-    login(req) {
+    async login(req, res) {
         const user = req.user;
-        return this.authService.login(user);
-    }
-    logout() {
+        const tokens = await this.authService.login(user);
+        res.cookie('refresh_token', tokens.refresh_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: constant_1.jwtConstants.refreshTokenExpiresInMs,
+        });
         return {
-            message: 'Déconnexion réussie',
+            access_token: tokens.access_token,
+            expires_in: tokens.expires_in,
+            user: tokens.user,
         };
+    }
+    async refresh(req, res) {
+        const refreshToken = req.cookies?.refresh_token;
+        if (!refreshToken) {
+            return { message: 'Refresh token manquant', statusCode: 401 };
+        }
+        const tokens = await this.authService.refreshTokens(refreshToken);
+        return {
+            access_token: tokens.access_token,
+            expires_in: tokens.expires_in,
+            user: tokens.user,
+        };
+    }
+    async logout(req, logoutDto, res) {
+        const userId = req.user.id;
+        const refreshToken = logoutDto.refresh_token || req.cookies?.refresh_token;
+        res.clearCookie('refresh_token');
+        return this.authService.logout(userId, refreshToken);
+    }
+    logoutAll(req, res) {
+        const userId = req.user.id;
+        res.clearCookie('refresh_token');
+        return this.authService.logoutAll(userId);
     }
     getProfile(req) {
         return req.user;
@@ -41,17 +72,41 @@ __decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
+    (0, common_1.Post)('refresh'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "refresh", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('logout'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, logout_dto_1.LogoutDto, Object]),
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "logout", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('logout-all'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "logoutAll", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('me'),
