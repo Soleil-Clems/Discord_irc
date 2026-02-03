@@ -4,6 +4,7 @@ import { ServersService } from './servers.service';
 import { ChangeRoleDto } from './dto/change-role.dto';
 import { LeaveServerDto } from './dto/leave-server.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
+import { BanUserDto } from './dto/ban-user.dto';
 export declare class ServersController {
     private readonly serversService;
     constructor(serversService: ServersService);
@@ -35,4 +36,25 @@ export declare class ServersController {
         message: string;
         server: import("./entities/server.entity").Server;
     }>;
+    banUser(req: any, serverId: number, dto: BanUserDto): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    unbanUser(req: any, serverId: number, userId: number): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    getBannedUsers(req: any, serverId: number): Promise<{
+        id: number;
+        user: {
+            id: number;
+            username: string;
+        };
+        bannedBy: {
+            id: number;
+            username: string;
+        } | null;
+        reason: string | null;
+        bannedAt: Date;
+    }[]>;
 }

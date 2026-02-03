@@ -19,6 +19,7 @@ import { ServersService } from './servers.service';
 import { ChangeRoleDto } from './dto/change-role.dto';
 import { LeaveServerDto } from './dto/leave-server.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
+import { BanUserDto } from './dto/ban-user.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('servers')
@@ -127,5 +128,36 @@ export class ServersController {
   @Post('join/:code')
   joinByCode(@Request() req, @Param('code') code: string) {
     return this.serversService.joinByCode(code, req.user.id);
+  }
+
+  @Post(':id/bans')
+  banUser(
+    @Request() req,
+    @Param('id', ParseIntPipe) serverId: number,
+    @Body() dto: BanUserDto,
+  ) {
+    return this.serversService.banUser(
+      serverId,
+      req.user.id,
+      dto.userId,
+      dto.reason,
+    );
+  }
+
+  @Delete(':id/bans/:userId')
+  unbanUser(
+    @Request() req,
+    @Param('id', ParseIntPipe) serverId: number,
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.serversService.unbanUser(serverId, req.user.id, userId);
+  }
+
+  @Get(':id/bans')
+  getBannedUsers(
+    @Request() req,
+    @Param('id', ParseIntPipe) serverId: number,
+  ) {
+    return this.serversService.getBannedUsers(serverId, req.user.id);
   }
 }

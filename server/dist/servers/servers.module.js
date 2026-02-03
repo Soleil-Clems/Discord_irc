@@ -18,6 +18,7 @@ const users_entity_1 = require("../users/entities/users.entity");
 const server_member_entity_1 = require("./entities/server-member.entity");
 const server_entity_1 = require("./entities/server.entity");
 const invitation_entity_1 = require("./entities/invitation.entity");
+const server_ban_entity_1 = require("./entities/server-ban.entity");
 const constant_1 = require("../auth/constant");
 let ServersModule = class ServersModule {
 };
@@ -26,8 +27,7 @@ exports.ServersModule = ServersModule = __decorate([
     (0, common_1.Module)({
         imports: [
             users_module_1.UsersModule,
-            typeorm_1.TypeOrmModule.forFeature([users_entity_1.Users, server_entity_1.Server, server_member_entity_1.ServerMember, invitation_entity_1.Invitation]),
-            typeorm_1.TypeOrmModule.forFeature([users_entity_1.Users, server_entity_1.Server, server_member_entity_1.ServerMember]),
+            typeorm_1.TypeOrmModule.forFeature([users_entity_1.Users, server_entity_1.Server, server_member_entity_1.ServerMember, invitation_entity_1.Invitation, server_ban_entity_1.ServerBan]),
             jwt_1.JwtModule.register({
                 secret: constant_1.jwtConstants.secret,
                 signOptions: { expiresIn: '5m' },

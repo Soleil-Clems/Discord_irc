@@ -3,6 +3,7 @@ import { Users } from '@/users/entities/users.entity';
 import { Server } from './entities/server.entity';
 import { ServerMember } from './entities/server-member.entity';
 import { Invitation } from './entities/invitation.entity';
+import { ServerBan } from './entities/server-ban.entity';
 import { ServerRole } from './enums/server-role.enum';
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
@@ -12,7 +13,32 @@ export declare class ServersService {
     private readonly serverRepository;
     private readonly serverMemberRepository;
     private readonly invitationRepository;
-    constructor(userRepository: Repository<Users>, serverRepository: Repository<Server>, serverMemberRepository: Repository<ServerMember>, invitationRepository: Repository<Invitation>);
+    private readonly serverBanRepository;
+    constructor(userRepository: Repository<Users>, serverRepository: Repository<Server>, serverMemberRepository: Repository<ServerMember>, invitationRepository: Repository<Invitation>, serverBanRepository: Repository<ServerBan>);
+    private readonly roleHierarchy;
+    isUserBanned(serverId: number, userId: number): Promise<boolean>;
+    canBanUser(requesterRole: ServerRole, targetRole: ServerRole): boolean;
+    banUser(serverId: number, requesterId: number, targetUserId: number, reason?: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    unbanUser(serverId: number, requesterId: number, targetUserId: number): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    getBannedUsers(serverId: number, requesterId: number): Promise<{
+        id: number;
+        user: {
+            id: number;
+            username: string;
+        };
+        bannedBy: {
+            id: number;
+            username: string;
+        } | null;
+        reason: string | null;
+        bannedAt: Date;
+    }[]>;
     create(createServerDto: CreateServerDto, userId: number): Promise<Server>;
     findAll(userId: number): Promise<Server[]>;
     findOne(serverId: number, userId: number): Promise<Server>;

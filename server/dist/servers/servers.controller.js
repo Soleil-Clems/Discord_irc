@@ -21,6 +21,7 @@ const servers_service_1 = require("./servers.service");
 const change_role_dto_1 = require("./dto/change-role.dto");
 const leave_server_dto_1 = require("./dto/leave-server.dto");
 const create_invitation_dto_1 = require("./dto/create-invitation.dto");
+const ban_user_dto_1 = require("./dto/ban-user.dto");
 let ServersController = class ServersController {
     serversService;
     constructor(serversService) {
@@ -61,6 +62,15 @@ let ServersController = class ServersController {
     }
     joinByCode(req, code) {
         return this.serversService.joinByCode(code, req.user.id);
+    }
+    banUser(req, serverId, dto) {
+        return this.serversService.banUser(serverId, req.user.id, dto.userId, dto.reason);
+    }
+    unbanUser(req, serverId, userId) {
+        return this.serversService.unbanUser(serverId, req.user.id, userId);
+    }
+    getBannedUsers(req, serverId) {
+        return this.serversService.getBannedUsers(serverId, req.user.id);
     }
 };
 exports.ServersController = ServersController;
@@ -164,6 +174,32 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], ServersController.prototype, "joinByCode", null);
+__decorate([
+    (0, common_1.Post)(':id/bans'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number, ban_user_dto_1.BanUserDto]),
+    __metadata("design:returntype", void 0)
+], ServersController.prototype, "banUser", null);
+__decorate([
+    (0, common_1.Delete)(':id/bans/:userId'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Param)('userId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number, Number]),
+    __metadata("design:returntype", void 0)
+], ServersController.prototype, "unbanUser", null);
+__decorate([
+    (0, common_1.Get)(':id/bans'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:returntype", void 0)
+], ServersController.prototype, "getBannedUsers", null);
 exports.ServersController = ServersController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('servers'),

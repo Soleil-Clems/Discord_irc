@@ -54,17 +54,153 @@ const users_entity_1 = require("../users/entities/users.entity");
 const server_entity_1 = require("./entities/server.entity");
 const server_member_entity_1 = require("./entities/server-member.entity");
 const invitation_entity_1 = require("./entities/invitation.entity");
+const server_ban_entity_1 = require("./entities/server-ban.entity");
 const server_role_enum_1 = require("./enums/server-role.enum");
 let ServersService = class ServersService {
     userRepository;
     serverRepository;
     serverMemberRepository;
     invitationRepository;
-    constructor(userRepository, serverRepository, serverMemberRepository, invitationRepository) {
+    serverBanRepository;
+    constructor(userRepository, serverRepository, serverMemberRepository, invitationRepository, serverBanRepository) {
         this.userRepository = userRepository;
         this.serverRepository = serverRepository;
         this.serverMemberRepository = serverMemberRepository;
         this.invitationRepository = invitationRepository;
+        this.serverBanRepository = serverBanRepository;
+    }
+    roleHierarchy = {
+        [server_role_enum_1.ServerRole.Owner]: 4,
+        [server_role_enum_1.ServerRole.Admin]: 3,
+        [server_role_enum_1.ServerRole.Moderator]: 2,
+        [server_role_enum_1.ServerRole.Member]: 1,
+    };
+    async isUserBanned(serverId, userId) {
+        const ban = await this.serverBanRepository.findOne({
+            where: {
+                server: { id: serverId },
+                user: { id: userId },
+            },
+        });
+        return !!ban;
+    }
+    canBanUser(requesterRole, targetRole) {
+        if (requesterRole === server_role_enum_1.ServerRole.Owner) {
+            return true;
+        }
+        if (requesterRole === server_role_enum_1.ServerRole.Admin) {
+            return (targetRole === server_role_enum_1.ServerRole.Moderator || targetRole === server_role_enum_1.ServerRole.Member);
+        }
+        return false;
+    }
+    async banUser(serverId, requesterId, targetUserId, reason) {
+        if (requesterId === targetUserId) {
+            throw new common_1.BadRequestException('Vous ne pouvez pas vous bannir vous-même');
+        }
+        const requester = await this.serverMemberRepository.findOne({
+            where: {
+                server: { id: serverId },
+                members: { id: requesterId },
+            },
+        });
+        if (!requester) {
+            throw new common_1.ForbiddenException('Vous ne faites pas partie de ce serveur');
+        }
+        if (requester.role !== server_role_enum_1.ServerRole.Owner &&
+            requester.role !== server_role_enum_1.ServerRole.Admin) {
+            throw new common_1.ForbiddenException('Seuls les owners et admins peuvent bannir des utilisateurs');
+        }
+        const target = await this.serverMemberRepository.findOne({
+            where: {
+                server: { id: serverId },
+                members: { id: targetUserId },
+            },
+        });
+        if (!target) {
+            throw new common_1.NotFoundException("L'utilisateur cible n'est pas membre de ce serveur");
+        }
+        if (!this.canBanUser(requester.role, target.role)) {
+            throw new common_1.ForbiddenException("Vous n'avez pas la permission de bannir cet utilisateur");
+        }
+        const existingBan = await this.serverBanRepository.findOne({
+            where: {
+                server: { id: serverId },
+                user: { id: targetUserId },
+            },
+        });
+        if (existingBan) {
+            throw new common_1.BadRequestException('Cet utilisateur est déjà banni');
+        }
+        const ban = this.serverBanRepository.create({
+            server: { id: serverId },
+            user: { id: targetUserId },
+            bannedBy: { id: requesterId },
+            reason: reason || null,
+        });
+        await this.serverBanRepository.save(ban);
+        await this.serverMemberRepository.remove(target);
+        return { success: true, message: 'Utilisateur banni avec succès' };
+    }
+    async unbanUser(serverId, requesterId, targetUserId) {
+        const requester = await this.serverMemberRepository.findOne({
+            where: {
+                server: { id: serverId },
+                members: { id: requesterId },
+            },
+        });
+        if (!requester) {
+            throw new common_1.ForbiddenException('Vous ne faites pas partie de ce serveur');
+        }
+        if (requester.role !== server_role_enum_1.ServerRole.Owner &&
+            requester.role !== server_role_enum_1.ServerRole.Admin) {
+            throw new common_1.ForbiddenException('Seuls les owners et admins peuvent débannir des utilisateurs');
+        }
+        const ban = await this.serverBanRepository.findOne({
+            where: {
+                server: { id: serverId },
+                user: { id: targetUserId },
+            },
+        });
+        if (!ban) {
+            throw new common_1.NotFoundException("Cet utilisateur n'est pas banni");
+        }
+        await this.serverBanRepository.remove(ban);
+        return { success: true, message: 'Utilisateur débanni avec succès' };
+    }
+    async getBannedUsers(serverId, requesterId) {
+        const requester = await this.serverMemberRepository.findOne({
+            where: {
+                server: { id: serverId },
+                members: { id: requesterId },
+            },
+        });
+        if (!requester) {
+            throw new common_1.ForbiddenException('Vous ne faites pas partie de ce serveur');
+        }
+        if (requester.role !== server_role_enum_1.ServerRole.Owner &&
+            requester.role !== server_role_enum_1.ServerRole.Admin) {
+            throw new common_1.ForbiddenException('Seuls les owners et admins peuvent voir la liste des bannis');
+        }
+        const bans = await this.serverBanRepository.find({
+            where: { server: { id: serverId } },
+            relations: ['user', 'bannedBy'],
+            order: { bannedAt: 'DESC' },
+        });
+        return bans.map((ban) => ({
+            id: ban.id,
+            user: {
+                id: ban.user.id,
+                username: ban.user.username,
+            },
+            bannedBy: ban.bannedBy
+                ? {
+                    id: ban.bannedBy.id,
+                    username: ban.bannedBy.username,
+                }
+                : null,
+            reason: ban.reason,
+            bannedAt: ban.bannedAt,
+        }));
     }
     async create(createServerDto, userId) {
         const user = await this.userRepository.findOneBy({ id: userId });
@@ -162,6 +298,10 @@ let ServersService = class ServersService {
         return { success: true };
     }
     async joinServer(serverId, userId) {
+        const isBanned = await this.isUserBanned(serverId, userId);
+        if (isBanned) {
+            throw new common_1.ForbiddenException('Vous êtes banni de ce serveur');
+        }
         const exists = await this.serverMemberRepository.findOne({
             where: {
                 server: { id: serverId },
@@ -329,6 +469,10 @@ let ServersService = class ServersService {
         if (existingMembership) {
             throw new common_1.BadRequestException('Vous êtes déjà membre de ce serveur');
         }
+        const isBanned = await this.isUserBanned(invitation.serverId, userId);
+        if (isBanned) {
+            throw new common_1.ForbiddenException('Vous êtes banni de ce serveur');
+        }
         const member = this.serverMemberRepository.create({
             server: { id: invitation.serverId },
             members: { id: userId },
@@ -350,7 +494,9 @@ exports.ServersService = ServersService = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(server_entity_1.Server)),
     __param(2, (0, typeorm_1.InjectRepository)(server_member_entity_1.ServerMember)),
     __param(3, (0, typeorm_1.InjectRepository)(invitation_entity_1.Invitation)),
+    __param(4, (0, typeorm_1.InjectRepository)(server_ban_entity_1.ServerBan)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

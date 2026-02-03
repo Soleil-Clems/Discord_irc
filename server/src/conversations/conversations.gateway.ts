@@ -10,6 +10,9 @@ import {
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from '@/auth/constant';
+import { Users } from '@/users/entities/users.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 import { ConversationsService } from './conversations.service';
 import { SendPrivateMessageDto } from './dto/send-private-message.dto';
@@ -36,6 +39,8 @@ export class ConversationsGateway
   constructor(
     private readonly conversationsService: ConversationsService,
     private readonly jwtService: JwtService,
+    @InjectRepository(Users)
+    private readonly userRepository: Repository<Users>,
   ) {}
 
   async handleConnection(client: AuthenticatedSocket) {
@@ -119,6 +124,7 @@ export class ConversationsGateway
       );
 
       this.server.to(`user:${otherUser.id}`).emit('newPrivateMessage', message);
+      this.server.to(`user:${userId}`).emit('newPrivateMessage', message);
 
       return message;
     } catch (e) {
@@ -143,9 +149,11 @@ export class ConversationsGateway
         userId,
       );
 
+      const currentUser = await this.userRepository.findOneBy({ id: userId });
       this.server.to(`user:${otherUser.id}`).emit('userTyping', {
         conversationId: data.conversationId,
         userId,
+        username: currentUser?.username,
       });
 
       return { success: true };
@@ -171,9 +179,11 @@ export class ConversationsGateway
         userId,
       );
 
+      const currentUser = await this.userRepository.findOneBy({ id: userId });
       this.server.to(`user:${otherUser.id}`).emit('userStoppedTyping', {
         conversationId: data.conversationId,
         userId,
+        username: currentUser?.username,
       });
 
       return { success: true };

@@ -1,6 +1,8 @@
 import { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
+import { Users } from '@/users/entities/users.entity';
+import { Repository } from 'typeorm';
 import { ConversationsService } from './conversations.service';
 import { SendPrivateMessageDto } from './dto/send-private-message.dto';
 import { TypingIndicatorDto } from './dto/typing-indicator.dto';
@@ -10,9 +12,10 @@ interface AuthenticatedSocket extends Socket {
 export declare class ConversationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly conversationsService;
     private readonly jwtService;
+    private readonly userRepository;
     server: Server;
     private userSockets;
-    constructor(conversationsService: ConversationsService, jwtService: JwtService);
+    constructor(conversationsService: ConversationsService, jwtService: JwtService, userRepository: Repository<Users>);
     handleConnection(client: AuthenticatedSocket): Promise<void>;
     handleDisconnect(client: AuthenticatedSocket): void;
     private getUserIdFromSocket;

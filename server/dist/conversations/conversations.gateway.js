@@ -17,17 +17,22 @@ const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const jwt_1 = require("@nestjs/jwt");
 const constant_1 = require("../auth/constant");
+const users_entity_1 = require("../users/entities/users.entity");
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
 const conversations_service_1 = require("./conversations.service");
 const send_private_message_dto_1 = require("./dto/send-private-message.dto");
 const typing_indicator_dto_1 = require("./dto/typing-indicator.dto");
 let ConversationsGateway = class ConversationsGateway {
     conversationsService;
     jwtService;
+    userRepository;
     server;
     userSockets = new Map();
-    constructor(conversationsService, jwtService) {
+    constructor(conversationsService, jwtService, userRepository) {
         this.conversationsService = conversationsService;
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
     async handleConnection(client) {
         try {
@@ -46,10 +51,8 @@ let ConversationsGateway = class ConversationsGateway {
             }
             this.userSockets.get(userId).add(client.id);
             client.join(`user:${userId}`);
-            console.log(`✅ Conversations: User ${userId} connecté (${client.id})`);
         }
-        catch (e) {
-            console.error('⚠️ Conversations JWT Error:', e.message);
+        catch {
             client.disconnect();
         }
     }
@@ -62,7 +65,6 @@ let ConversationsGateway = class ConversationsGateway {
                     this.userSockets.delete(client.userId);
                 }
             }
-            console.log(`❌ Conversations: User ${client.userId} déconnecté (${client.id})`);
         }
     }
     async getUserIdFromSocket(client) {
@@ -89,10 +91,10 @@ let ConversationsGateway = class ConversationsGateway {
             const message = await this.conversationsService.createMessage(data.conversationId, { content: data.content, type: data.type }, userId);
             const otherUser = await this.conversationsService.getOtherUser(data.conversationId, userId);
             this.server.to(`user:${otherUser.id}`).emit('newPrivateMessage', message);
+            this.server.to(`user:${userId}`).emit('newPrivateMessage', message);
             return message;
         }
         catch (e) {
-            console.error('⚠️ sendPrivateMessage Error:', e.message);
             return { error: e.message };
         }
     }
@@ -103,14 +105,15 @@ let ConversationsGateway = class ConversationsGateway {
                 return { error: 'Unauthorized' };
             }
             const otherUser = await this.conversationsService.getOtherUser(data.conversationId, userId);
+            const currentUser = await this.userRepository.findOneBy({ id: userId });
             this.server.to(`user:${otherUser.id}`).emit('userTyping', {
                 conversationId: data.conversationId,
                 userId,
+                username: currentUser?.username,
             });
             return { success: true };
         }
         catch (e) {
-            console.error('⚠️ typing Error:', e.message);
             return { error: e.message };
         }
     }
@@ -121,14 +124,15 @@ let ConversationsGateway = class ConversationsGateway {
                 return { error: 'Unauthorized' };
             }
             const otherUser = await this.conversationsService.getOtherUser(data.conversationId, userId);
+            const currentUser = await this.userRepository.findOneBy({ id: userId });
             this.server.to(`user:${otherUser.id}`).emit('userStoppedTyping', {
                 conversationId: data.conversationId,
                 userId,
+                username: currentUser?.username,
             });
             return { success: true };
         }
         catch (e) {
-            console.error('⚠️ stopTyping Error:', e.message);
             return { error: e.message };
         }
     }
@@ -172,7 +176,9 @@ exports.ConversationsGateway = ConversationsGateway = __decorate([
             credentials: true,
         },
     }),
+    __param(2, (0, typeorm_1.InjectRepository)(users_entity_1.Users)),
     __metadata("design:paramtypes", [conversations_service_1.ConversationsService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        typeorm_2.Repository])
 ], ConversationsGateway);
 //# sourceMappingURL=conversations.gateway.js.map

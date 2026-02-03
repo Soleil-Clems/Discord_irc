@@ -12,6 +12,7 @@ import { Users } from '@/users/entities/users.entity';
 import { Server } from './entities/server.entity';
 import { ServerMember } from './entities/server-member.entity';
 import { Invitation } from './entities/invitation.entity';
+import { ServerBan } from './entities/server-ban.entity';
 import { ServerRole } from './enums/server-role.enum';
 
 import { CreateServerDto } from './dto/create-server.dto';
@@ -32,7 +33,194 @@ export class ServersService {
 
     @InjectRepository(Invitation)
     private readonly invitationRepository: Repository<Invitation>,
+
+    @InjectRepository(ServerBan)
+    private readonly serverBanRepository: Repository<ServerBan>,
   ) {}
+
+  private readonly roleHierarchy: Record<ServerRole, number> = {
+    [ServerRole.Owner]: 4,
+    [ServerRole.Admin]: 3,
+    [ServerRole.Moderator]: 2,
+    [ServerRole.Member]: 1,
+  };
+
+  async isUserBanned(serverId: number, userId: number): Promise<boolean> {
+    const ban = await this.serverBanRepository.findOne({
+      where: {
+        server: { id: serverId },
+        user: { id: userId },
+      },
+    });
+    return !!ban;
+  }
+
+  canBanUser(requesterRole: ServerRole, targetRole: ServerRole): boolean {
+    if (requesterRole === ServerRole.Owner) {
+      return true;
+    }
+    if (requesterRole === ServerRole.Admin) {
+      return (
+        targetRole === ServerRole.Moderator || targetRole === ServerRole.Member
+      );
+    }
+    return false;
+  }
+
+  async banUser(
+    serverId: number,
+    requesterId: number,
+    targetUserId: number,
+    reason?: string,
+  ) {
+    if (requesterId === targetUserId) {
+      throw new BadRequestException('Vous ne pouvez pas vous bannir vous-même');
+    }
+
+    const requester = await this.serverMemberRepository.findOne({
+      where: {
+        server: { id: serverId },
+        members: { id: requesterId },
+      },
+    });
+
+    if (!requester) {
+      throw new ForbiddenException('Vous ne faites pas partie de ce serveur');
+    }
+
+    if (
+      requester.role !== ServerRole.Owner &&
+      requester.role !== ServerRole.Admin
+    ) {
+      throw new ForbiddenException(
+        'Seuls les owners et admins peuvent bannir des utilisateurs',
+      );
+    }
+
+    const target = await this.serverMemberRepository.findOne({
+      where: {
+        server: { id: serverId },
+        members: { id: targetUserId },
+      },
+    });
+
+    if (!target) {
+      throw new NotFoundException(
+        "L'utilisateur cible n'est pas membre de ce serveur",
+      );
+    }
+
+    if (!this.canBanUser(requester.role, target.role)) {
+      throw new ForbiddenException(
+        "Vous n'avez pas la permission de bannir cet utilisateur",
+      );
+    }
+
+    const existingBan = await this.serverBanRepository.findOne({
+      where: {
+        server: { id: serverId },
+        user: { id: targetUserId },
+      },
+    });
+
+    if (existingBan) {
+      throw new BadRequestException('Cet utilisateur est déjà banni');
+    }
+
+    const ban = this.serverBanRepository.create({
+      server: { id: serverId },
+      user: { id: targetUserId },
+      bannedBy: { id: requesterId },
+      reason: reason || null,
+    });
+
+    await this.serverBanRepository.save(ban);
+
+    await this.serverMemberRepository.remove(target);
+
+    return { success: true, message: 'Utilisateur banni avec succès' };
+  }
+
+  async unbanUser(serverId: number, requesterId: number, targetUserId: number) {
+    const requester = await this.serverMemberRepository.findOne({
+      where: {
+        server: { id: serverId },
+        members: { id: requesterId },
+      },
+    });
+
+    if (!requester) {
+      throw new ForbiddenException('Vous ne faites pas partie de ce serveur');
+    }
+
+    if (
+      requester.role !== ServerRole.Owner &&
+      requester.role !== ServerRole.Admin
+    ) {
+      throw new ForbiddenException(
+        'Seuls les owners et admins peuvent débannir des utilisateurs',
+      );
+    }
+
+    const ban = await this.serverBanRepository.findOne({
+      where: {
+        server: { id: serverId },
+        user: { id: targetUserId },
+      },
+    });
+
+    if (!ban) {
+      throw new NotFoundException("Cet utilisateur n'est pas banni");
+    }
+
+    await this.serverBanRepository.remove(ban);
+
+    return { success: true, message: 'Utilisateur débanni avec succès' };
+  }
+
+  async getBannedUsers(serverId: number, requesterId: number) {
+    const requester = await this.serverMemberRepository.findOne({
+      where: {
+        server: { id: serverId },
+        members: { id: requesterId },
+      },
+    });
+
+    if (!requester) {
+      throw new ForbiddenException('Vous ne faites pas partie de ce serveur');
+    }
+
+    if (
+      requester.role !== ServerRole.Owner &&
+      requester.role !== ServerRole.Admin
+    ) {
+      throw new ForbiddenException(
+        'Seuls les owners et admins peuvent voir la liste des bannis',
+      );
+    }
+
+    const bans = await this.serverBanRepository.find({
+      where: { server: { id: serverId } },
+      relations: ['user', 'bannedBy'],
+      order: { bannedAt: 'DESC' },
+    });
+
+    return bans.map((ban) => ({
+      id: ban.id,
+      user: {
+        id: ban.user.id,
+        username: ban.user.username,
+      },
+      bannedBy: ban.bannedBy
+        ? {
+            id: ban.bannedBy.id,
+            username: ban.bannedBy.username,
+          }
+        : null,
+      reason: ban.reason,
+      bannedAt: ban.bannedAt,
+    }));
+  }
 
   async create(createServerDto: CreateServerDto, userId: number) {
     const user = await this.userRepository.findOneBy({ id: userId });
@@ -159,6 +347,11 @@ export class ServersService {
   }
 
   async joinServer(serverId: number, userId: number) {
+    const isBanned = await this.isUserBanned(serverId, userId);
+    if (isBanned) {
+      throw new ForbiddenException('Vous êtes banni de ce serveur');
+    }
+
     const exists = await this.serverMemberRepository.findOne({
       where: {
         server: { id: serverId },
@@ -392,6 +585,11 @@ export class ServersService {
 
     if (existingMembership) {
       throw new BadRequestException('Vous êtes déjà membre de ce serveur');
+    }
+
+    const isBanned = await this.isUserBanned(invitation.serverId, userId);
+    if (isBanned) {
+      throw new ForbiddenException('Vous êtes banni de ce serveur');
     }
 
     const member = this.serverMemberRepository.create({
