@@ -20,6 +20,7 @@ const update_server_dto_1 = require("./dto/update-server.dto");
 const servers_service_1 = require("./servers.service");
 const change_role_dto_1 = require("./dto/change-role.dto");
 const leave_server_dto_1 = require("./dto/leave-server.dto");
+const create_invitation_dto_1 = require("./dto/create-invitation.dto");
 let ServersController = class ServersController {
     serversService;
     constructor(serversService) {
@@ -48,6 +49,18 @@ let ServersController = class ServersController {
     }
     leave(req, serverId, dto) {
         return this.serversService.leaveServer(serverId, req.user.id, dto.newOwnerId);
+    }
+    createInvitation(req, serverId, dto) {
+        return this.serversService.createInvitation(serverId, req.user.id, dto);
+    }
+    getInvitations(req, serverId) {
+        return this.serversService.getServerInvitations(serverId, req.user.id);
+    }
+    deleteInvitation(req, serverId, invitationId) {
+        return this.serversService.deleteInvitation(serverId, invitationId, req.user.id);
+    }
+    joinByCode(req, code) {
+        return this.serversService.joinByCode(code, req.user.id);
     }
 };
 exports.ServersController = ServersController;
@@ -117,6 +130,40 @@ __decorate([
     __metadata("design:paramtypes", [Object, Number, leave_server_dto_1.LeaveServerDto]),
     __metadata("design:returntype", void 0)
 ], ServersController.prototype, "leave", null);
+__decorate([
+    (0, common_1.Post)(':id/invitations'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number, create_invitation_dto_1.CreateInvitationDto]),
+    __metadata("design:returntype", void 0)
+], ServersController.prototype, "createInvitation", null);
+__decorate([
+    (0, common_1.Get)(':id/invitations'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number]),
+    __metadata("design:returntype", void 0)
+], ServersController.prototype, "getInvitations", null);
+__decorate([
+    (0, common_1.Delete)(':id/invitations/:invitationId'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(2, (0, common_1.Param)('invitationId', common_1.ParseIntPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Number, Number]),
+    __metadata("design:returntype", void 0)
+], ServersController.prototype, "deleteInvitation", null);
+__decorate([
+    (0, common_1.Post)('join/:code'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Param)('code')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], ServersController.prototype, "joinByCode", null);
 exports.ServersController = ServersController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('servers'),
