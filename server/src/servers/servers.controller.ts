@@ -31,19 +31,20 @@ export class ServersController {
   }
 
   @Get()
-  async findAll() {
-    return this.serversService.findAll();
+  async findAll(@Request() req) {
+    return this.serversService.findAll(req.user.id);
   }
 
   @Get(':id')
   async findOne(
+    @Request() req,
     @Param(
       'id',
       new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
     )
     id: number,
   ) {
-    return this.serversService.findOne(id);
+    return this.serversService.findOne(id, req.user.id);
   }
 
   @Patch(':id')

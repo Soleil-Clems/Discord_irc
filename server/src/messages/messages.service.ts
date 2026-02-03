@@ -14,6 +14,7 @@ import { ServerRole } from '@/servers/enums/server-role.enum';
 
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { ChannelType } from '@/channels/enums/channel-type.enum';
 
 @Injectable()
 export class MessagesService {
@@ -37,7 +38,7 @@ export class MessagesService {
       relations: { server: true },
     });
 
-    if (!channel) {
+    if (!channel || channel.type !== ChannelType.Text) {
       throw new NotFoundException('Channel introuvable');
     }
 

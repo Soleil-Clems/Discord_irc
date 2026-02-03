@@ -57,12 +57,10 @@ let ChannelsService = class ChannelsService {
         return this.channelRepository.save(channel);
     }
     async findAll(serverId) {
-        return this.channelRepository.find({
-            where: {
-                server: { id: serverId },
-            },
-            order: {
-                createdAt: 'ASC',
+        return this.serverRepository.find({
+            where: { id: serverId },
+            relations: {
+                channels: true,
             },
         });
     }
@@ -71,6 +69,9 @@ let ChannelsService = class ChannelsService {
             where: { id: channelId },
             relations: {
                 server: true,
+                messages: {
+                    author: true,
+                },
             },
         });
         if (!channel) {

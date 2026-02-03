@@ -8,8 +8,8 @@ export declare class ServersController {
     private readonly serversService;
     constructor(serversService: ServersService);
     create(req: any, createServerDto: CreateServerDto): Promise<import("./entities/server.entity").Server>;
-    findAll(): Promise<import("./entities/server.entity").Server[]>;
-    findOne(id: number): Promise<import("./entities/server.entity").Server>;
+    findAll(req: any): Promise<import("./entities/server.entity").Server[]>;
+    findOne(req: any, id: number): Promise<import("./entities/server.entity").Server>;
     update(req: any, id: number, updateServerDto: UpdateServerDto): Promise<import("./entities/server.entity").Server>;
     remove(req: any, id: number): Promise<{
         success: boolean;

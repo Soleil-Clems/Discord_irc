@@ -14,8 +14,8 @@ export declare class ServersService {
     private readonly invitationRepository;
     constructor(userRepository: Repository<Users>, serverRepository: Repository<Server>, serverMemberRepository: Repository<ServerMember>, invitationRepository: Repository<Invitation>);
     create(createServerDto: CreateServerDto, userId: number): Promise<Server>;
-    findAll(): Promise<Server[]>;
-    findOne(serverId: number): Promise<Server>;
+    findAll(userId: number): Promise<Server[]>;
+    findOne(serverId: number, userId: number): Promise<Server>;
     update(serverId: number, updateServerDto: UpdateServerDto, userId: number): Promise<Server>;
     remove(serverId: number, userId: number): Promise<{
         success: boolean;
