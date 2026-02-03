@@ -15,6 +15,7 @@ const typeorm_1 = require("@nestjs/typeorm");
 const users_entity_1 = require("../users/entities/users.entity");
 const server_member_entity_1 = require("./entities/server-member.entity");
 const server_entity_1 = require("./entities/server.entity");
+const invitation_entity_1 = require("./entities/invitation.entity");
 let ServersModule = class ServersModule {
 };
 exports.ServersModule = ServersModule;
@@ -22,7 +23,7 @@ exports.ServersModule = ServersModule = __decorate([
     (0, common_1.Module)({
         imports: [
             users_module_1.UsersModule,
-            typeorm_1.TypeOrmModule.forFeature([users_entity_1.Users, server_entity_1.Server, server_member_entity_1.ServerMember]),
+            typeorm_1.TypeOrmModule.forFeature([users_entity_1.Users, server_entity_1.Server, server_member_entity_1.ServerMember, invitation_entity_1.Invitation]),
         ],
         providers: [servers_service_1.ServersService],
         controllers: [servers_controller_1.ServersController],

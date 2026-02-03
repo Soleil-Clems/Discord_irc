@@ -21,6 +21,7 @@ const channel_entity_1 = require("../channels/entities/channel.entity");
 const users_entity_1 = require("../users/entities/users.entity");
 const server_member_entity_1 = require("../servers/entities/server-member.entity");
 const server_role_enum_1 = require("../servers/enums/server-role.enum");
+const channel_type_enum_1 = require("../channels/enums/channel-type.enum");
 let MessagesService = class MessagesService {
     messageRepository;
     channelRepository;
@@ -37,7 +38,7 @@ let MessagesService = class MessagesService {
             where: { id: createMessageDto.channelId },
             relations: { server: true },
         });
-        if (!channel) {
+        if (!channel || channel.type !== channel_type_enum_1.ChannelType.Text) {
             throw new common_1.NotFoundException('Channel introuvable');
         }
         const member = await this.serverMemberRepository.findOne({

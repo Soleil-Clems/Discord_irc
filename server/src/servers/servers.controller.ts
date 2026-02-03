@@ -18,6 +18,7 @@ import { UpdateServerDto } from './dto/update-server.dto';
 import { ServersService } from './servers.service';
 import { ChangeRoleDto } from './dto/change-role.dto';
 import { LeaveServerDto } from './dto/leave-server.dto';
+import { CreateInvitationDto } from './dto/create-invitation.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('servers')
@@ -30,19 +31,20 @@ export class ServersController {
   }
 
   @Get()
-  async findAll() {
-    return this.serversService.findAll();
+  async findAll(@Request() req) {
+    return this.serversService.findAll(req.user.id);
   }
 
   @Get(':id')
   async findOne(
+    @Request() req,
     @Param(
       'id',
       new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
     )
     id: number,
   ) {
-    return this.serversService.findOne(id);
+    return this.serversService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
@@ -93,5 +95,40 @@ export class ServersController {
       req.user.id,
       dto.newOwnerId,
     );
+  }
+
+  @Post(':id/invitations')
+  createInvitation(
+    @Request() req,
+    @Param('id', ParseIntPipe) serverId: number,
+    @Body() dto: CreateInvitationDto,
+  ) {
+    return this.serversService.createInvitation(serverId, req.user.id, dto);
+  }
+
+  @Get(':id/invitations')
+  getInvitations(
+    @Request() req,
+    @Param('id', ParseIntPipe) serverId: number,
+  ) {
+    return this.serversService.getServerInvitations(serverId, req.user.id);
+  }
+
+  @Delete(':id/invitations/:invitationId')
+  deleteInvitation(
+    @Request() req,
+    @Param('id', ParseIntPipe) serverId: number,
+    @Param('invitationId', ParseIntPipe) invitationId: number,
+  ) {
+    return this.serversService.deleteInvitation(
+      serverId,
+      invitationId,
+      req.user.id,
+    );
+  }
+
+  @Post('join/:code')
+  joinByCode(@Request() req, @Param('code') code: string) {
+    return this.serversService.joinByCode(code, req.user.id);
   }
 }

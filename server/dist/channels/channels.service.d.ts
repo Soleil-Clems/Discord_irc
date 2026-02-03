@@ -11,7 +11,7 @@ export declare class ChannelsService {
     constructor(channelRepository: Repository<Channel>, serverRepository: Repository<Server>, serverMemberRepository: Repository<ServerMember>);
     private assertAdminOrOwner;
     create(dto: CreateChannelDto, userId: number): Promise<Channel>;
-    findAll(serverId: number): Promise<Channel[]>;
+    findAll(serverId: number): Promise<Server[]>;
     findOne(channelId: number): Promise<Channel>;
     update(channelId: number, dto: UpdateChannelDto, userId: number): Promise<Channel>;
     remove(channelId: number, userId: number): Promise<{
