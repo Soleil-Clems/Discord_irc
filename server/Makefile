@@ -2,7 +2,7 @@
 
 up:
 			@echo "=== Demarrage du conteneur... ==="
-			docker compose -f .docker/compose.yml up -d &&  npm run start
+			docker compose -f .docker/compose.yml up 
 
 down:
 		@echo "=== Arret du conteneur... ==="

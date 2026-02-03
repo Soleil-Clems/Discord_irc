@@ -107,10 +107,7 @@ export class ServersController {
   }
 
   @Get(':id/invitations')
-  getInvitations(
-    @Request() req,
-    @Param('id', ParseIntPipe) serverId: number,
-  ) {
+  getInvitations(@Request() req, @Param('id', ParseIntPipe) serverId: number) {
     return this.serversService.getServerInvitations(serverId, req.user.id);
   }
 

@@ -57,7 +57,7 @@ __decorate([
     __metadata("design:type", Object)
 ], Invitation.prototype, "expiresAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'max_uses', nullable: true }),
+    (0, typeorm_1.Column)({ name: 'max_uses', type: 'int', nullable: true }),
     __metadata("design:type", Object)
 ], Invitation.prototype, "maxUses", void 0);
 __decorate([

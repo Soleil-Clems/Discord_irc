@@ -34,7 +34,7 @@ export class Invitation {
   @Column({ name: 'expires_at', type: 'datetime', nullable: true })
   expiresAt: Date | null;
 
-  @Column({ name: 'max_uses', nullable: true })
+  @Column({ name: 'max_uses', type: 'int', nullable: true })
   maxUses: number | null;
 
   @Column({ name: 'uses_count', default: 0 })
