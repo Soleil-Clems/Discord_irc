@@ -3,4 +3,5 @@ export enum MessageType {
   Voice = 'voice',
   Image = 'img',
   File = 'file',
+  System = 'system',
 }

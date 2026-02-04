@@ -13,11 +13,13 @@ import { Invitation } from './entities/invitation.entity';
 import { ServerBan } from './entities/server-ban.entity';
 import { jwtConstants } from '@/auth/constant';
 import { ChannelsModule } from '@/channels/channels.module';
+import { MessagesModule } from '@/messages/messages.module';
 
 @Module({
   imports: [
     UsersModule,
     ChannelsModule,
+    MessagesModule,
     TypeOrmModule.forFeature([
       Users,
       Server,

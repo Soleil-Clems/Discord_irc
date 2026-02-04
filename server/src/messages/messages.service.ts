@@ -15,6 +15,7 @@ import { ServerRole } from '@/servers/enums/server-role.enum';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { ChannelType } from '@/channels/enums/channel-type.enum';
+import { MessageType } from './enums/message-type.enum';
 
 @Injectable()
 export class MessagesService {
@@ -68,6 +69,31 @@ export class MessagesService {
     const message = this.messageRepository.create({
       content: createMessageDto.content,
       type: createMessageDto.type,
+      author: user,
+      channel: channel,
+    });
+
+    return this.messageRepository.save(message);
+  }
+
+  async createSystemMessage(channelId: number, content: string, userId: number) {
+    const channel = await this.channelRepository.findOne({
+      where: { id: channelId },
+    });
+
+    if (!channel) {
+      throw new NotFoundException('Channel introuvable');
+    }
+
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    const message = this.messageRepository.create({
+      content,
+      type: MessageType.System,
       author: user,
       channel: channel,
     });
