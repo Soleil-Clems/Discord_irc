@@ -18,12 +18,15 @@ import { ServerRole } from './enums/server-role.enum';
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
+import { ChannelsService } from '@/channels/channels.service';
+import { ChannelType } from '@/channels/enums/channel-type.enum';
 
 @Injectable()
 export class ServersService {
   constructor(
     @InjectRepository(Users)
     private readonly userRepository: Repository<Users>,
+    private readonly channelService: ChannelsService,
 
     @InjectRepository(Server)
     private readonly serverRepository: Repository<Server>,
@@ -238,8 +241,16 @@ export class ServersService {
       server: server,
       role: ServerRole.Owner,
     });
-
     await this.serverMemberRepository.save(ownerMembership);
+
+    await this.channelService.create(
+      {
+        name: 'general',
+        type: ChannelType.Text,
+        serverId: server.id,
+      },
+      userId,
+    );
 
     return server;
   }

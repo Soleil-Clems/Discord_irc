@@ -154,10 +154,7 @@ export class ServersController {
   }
 
   @Get(':id/bans')
-  getBannedUsers(
-    @Request() req,
-    @Param('id', ParseIntPipe) serverId: number,
-  ) {
+  getBannedUsers(@Request() req, @Param('id', ParseIntPipe) serverId: number) {
     return this.serversService.getBannedUsers(serverId, req.user.id);
   }
 }

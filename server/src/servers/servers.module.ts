@@ -16,7 +16,13 @@ import { jwtConstants } from '@/auth/constant';
 @Module({
   imports: [
     UsersModule,
-    TypeOrmModule.forFeature([Users, Server, ServerMember, Invitation, ServerBan]),
+    TypeOrmModule.forFeature([
+      Users,
+      Server,
+      ServerMember,
+      Invitation,
+      ServerBan,
+    ]),
     JwtModule.register({
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '7d' },
