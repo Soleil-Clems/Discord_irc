@@ -21,5 +21,6 @@ import { jwtConstants } from '@/auth/constant';
   ],
   providers: [MessagesGateway, MessagesService],
   controllers: [MessagesController],
+  exports: [MessagesService, MessagesGateway],
 })
 export class MessagesModule {}

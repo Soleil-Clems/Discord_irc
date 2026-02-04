@@ -20,6 +20,8 @@ import { UpdateServerDto } from './dto/update-server.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { ChannelsService } from '@/channels/channels.service';
 import { ChannelType } from '@/channels/enums/channel-type.enum';
+import { MessagesService } from '@/messages/messages.service';
+import { MessagesGateway } from '@/messages/messages.gateway';
 
 @Injectable()
 export class ServersService {
@@ -27,6 +29,8 @@ export class ServersService {
     @InjectRepository(Users)
     private readonly userRepository: Repository<Users>,
     private readonly channelService: ChannelsService,
+    private readonly messagesService: MessagesService,
+    private readonly messagesGateway: MessagesGateway,
 
     @InjectRepository(Server)
     private readonly serverRepository: Repository<Server>,
@@ -56,6 +60,33 @@ export class ServersService {
       },
     });
     return !!ban;
+  }
+
+  private async sendJoinNotification(serverId: number, userId: number) {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) return;
+
+    const server = await this.serverRepository.findOne({
+      where: { id: serverId },
+      relations: { channels: true },
+    });
+
+    if (!server || !server.channels.length) return;
+
+    const defaultChannel = server.channels.find(
+      (ch) => ch.type === ChannelType.Text,
+    );
+    if (!defaultChannel) return;
+
+    const content = `**${user.username}** vient de rejoindre le serveur. Bienvenue !`;
+    const systemMessage = await this.messagesService.createSystemMessage(
+      defaultChannel.id,
+      content,
+      userId,
+    );
+
+    const roomName = `channel_${defaultChannel.id}`;
+    this.messagesGateway.server.to(roomName).emit('newMessage', systemMessage);
   }
 
   canBanUser(requesterRole: ServerRole, targetRole: ServerRole): boolean {
@@ -380,7 +411,11 @@ export class ServersService {
       role: ServerRole.Member,
     });
 
-    return this.serverMemberRepository.save(member);
+    const savedMember = await this.serverMemberRepository.save(member);
+
+    await this.sendJoinNotification(serverId, userId);
+
+    return savedMember;
   }
 
   async changeMemberRole(
@@ -613,6 +648,8 @@ export class ServersService {
 
     invitation.usesCount += 1;
     await this.invitationRepository.save(invitation);
+
+    await this.sendJoinNotification(invitation.serverId, userId);
 
     return {
       message: 'Vous avez rejoint le serveur',
