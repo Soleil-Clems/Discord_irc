@@ -10,13 +10,13 @@ import { Users } from '@/users/entities/users.entity';
 import { ServerMember } from './entities/server-member.entity';
 import { Server } from './entities/server.entity';
 import { Invitation } from './entities/invitation.entity';
+import { ServerBan } from './entities/server-ban.entity';
 import { jwtConstants } from '@/auth/constant';
 
 @Module({
   imports: [
     UsersModule,
-    TypeOrmModule.forFeature([Users, Server, ServerMember, Invitation]),
-    TypeOrmModule.forFeature([Users, Server, ServerMember]),
+    TypeOrmModule.forFeature([Users, Server, ServerMember, Invitation, ServerBan]),
     JwtModule.register({
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '7d' },
