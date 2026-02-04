@@ -14,10 +14,12 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServersGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
+const ws_jwt_guard_1 = require("../auth/ws-jwt.guard");
 const socket_io_1 = require("socket.io");
 const servers_service_1 = require("./servers.service");
 const jwt_1 = require("@nestjs/jwt");
-const constant_1 = require("../auth/constant");
+const ws_user_decorator_1 = require("../auth/decorators/ws-user.decorator");
+const common_1 = require("@nestjs/common");
 let ServersGateway = class ServersGateway {
     serversService;
     jwtService;
@@ -27,30 +29,13 @@ let ServersGateway = class ServersGateway {
         this.jwtService = jwtService;
     }
     handleConnection(client) {
-        console.log(`✅ Client WebSocket connecté: ${client.id}`);
+        console.log(`Client WebSocket connecté: ${client.id}`);
     }
     handleDisconnect(client) {
-        console.log(`❌ Client WebSocket déconnecté: ${client.id}`);
+        console.log(`Client WebSocket déconnecté: ${client.id}`);
     }
-    async findAll(client, data) {
-        try {
-            const token = client.handshake.auth.token;
-            if (!token) {
-                console.error('❌ Pas de token fourni dans le handshake');
-                return { error: 'No token provided' };
-            }
-            const payload = await this.jwtService.verifyAsync(token, {
-                secret: constant_1.jwtConstants.secret,
-            });
-            const userId = payload.id;
-            console.log(`📡 Fetching servers pour l'user ID: ${userId}`);
-            const servers = await this.serversService.findAll(userId);
-            return servers;
-        }
-        catch (e) {
-            console.error('⚠️ JWT Error:', e.message);
-            return { error: 'Unauthorized', message: e.message };
-        }
+    findAll(user) {
+        return this.serversService.findAll(user.id);
     }
 };
 exports.ServersGateway = ServersGateway;
@@ -60,11 +45,10 @@ __decorate([
 ], ServersGateway.prototype, "server", void 0);
 __decorate([
     (0, websockets_1.SubscribeMessage)('findAllServers'),
-    __param(0, (0, websockets_1.ConnectedSocket)()),
-    __param(1, (0, websockets_1.MessageBody)()),
+    __param(0, (0, ws_user_decorator_1.WsUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [socket_io_1.Socket, Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
 ], ServersGateway.prototype, "findAll", null);
 exports.ServersGateway = ServersGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
@@ -73,6 +57,7 @@ exports.ServersGateway = ServersGateway = __decorate([
             credentials: true,
         },
     }),
+    (0, common_1.UseGuards)(ws_jwt_guard_1.WsJwtGuard),
     __metadata("design:paramtypes", [servers_service_1.ServersService,
         jwt_1.JwtService])
 ], ServersGateway);

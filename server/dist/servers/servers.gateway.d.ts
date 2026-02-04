@@ -9,11 +9,5 @@ export declare class ServersGateway implements OnGatewayConnection, OnGatewayDis
     constructor(serversService: ServersService, jwtService: JwtService);
     handleConnection(client: Socket): void;
     handleDisconnect(client: Socket): void;
-    findAll(client: Socket, data: any): Promise<import("./entities/server.entity").Server[] | {
-        error: string;
-        message?: undefined;
-    } | {
-        error: string;
-        message: any;
-    }>;
+    findAll(user: any): Promise<import("./entities/server.entity").Server[]>;
 }

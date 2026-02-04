@@ -17,6 +17,8 @@ const server_member_entity_1 = require("../servers/entities/server-member.entity
 const server_entity_1 = require("../servers/entities/server.entity");
 const message_entity_1 = require("./entities/message.entity");
 const users_entity_1 = require("../users/entities/users.entity");
+const jwt_1 = require("@nestjs/jwt");
+const constant_1 = require("../auth/constant");
 let MessagesModule = class MessagesModule {
 };
 exports.MessagesModule = MessagesModule;
@@ -24,6 +26,10 @@ exports.MessagesModule = MessagesModule = __decorate([
     (0, common_1.Module)({
         imports: [
             typeorm_1.TypeOrmModule.forFeature([message_entity_1.Message, channel_entity_1.Channel, server_entity_1.Server, server_member_entity_1.ServerMember, users_entity_1.Users]),
+            jwt_1.JwtModule.register({
+                secret: constant_1.jwtConstants.secret,
+                signOptions: { expiresIn: '7d' },
+            }),
         ],
         providers: [messages_gateway_1.MessagesGateway, messages_service_1.MessagesService],
         controllers: [messages_controller_1.MessagesController],

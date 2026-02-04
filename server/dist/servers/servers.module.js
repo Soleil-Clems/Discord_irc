@@ -30,7 +30,7 @@ exports.ServersModule = ServersModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([users_entity_1.Users, server_entity_1.Server, server_member_entity_1.ServerMember]),
             jwt_1.JwtModule.register({
                 secret: constant_1.jwtConstants.secret,
-                signOptions: { expiresIn: '5m' },
+                signOptions: { expiresIn: '7d' },
             }),
         ],
         providers: [servers_gateway_1.ServersGateway, servers_service_1.ServersService],

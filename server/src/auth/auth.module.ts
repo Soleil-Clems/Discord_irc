@@ -18,7 +18,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     PassportModule,
     JwtModule.register({
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '5m' },
+      signOptions: { expiresIn: '7D' },
     }),
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],

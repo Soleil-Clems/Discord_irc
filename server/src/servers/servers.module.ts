@@ -19,7 +19,7 @@ import { jwtConstants } from '@/auth/constant';
     TypeOrmModule.forFeature([Users, Server, ServerMember]),
     JwtModule.register({
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '5m' },
+      signOptions: { expiresIn: '7d' },
     }),
   ],
   providers: [ServersGateway, ServersService],

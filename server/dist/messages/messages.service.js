@@ -38,8 +38,11 @@ let MessagesService = class MessagesService {
             where: { id: createMessageDto.channelId },
             relations: { server: true },
         });
-        if (!channel || channel.type !== channel_type_enum_1.ChannelType.Text) {
+        if (!channel) {
             throw new common_1.NotFoundException('Channel introuvable');
+        }
+        if (channel.type !== channel_type_enum_1.ChannelType.Text) {
+            throw new common_1.NotFoundException("Impossible d'envoyer des messages dans un channel call.");
         }
         const member = await this.serverMemberRepository.findOne({
             where: {

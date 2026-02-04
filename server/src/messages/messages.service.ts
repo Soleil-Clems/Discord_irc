@@ -38,8 +38,14 @@ export class MessagesService {
       relations: { server: true },
     });
 
-    if (!channel || channel.type !== ChannelType.Text) {
+    if (!channel) {
       throw new NotFoundException('Channel introuvable');
+    }
+
+    if (channel.type !== ChannelType.Text) {
+      throw new NotFoundException(
+        "Impossible d'envoyer des messages dans un channel call.",
+      );
     }
 
     const member = await this.serverMemberRepository.findOne({
