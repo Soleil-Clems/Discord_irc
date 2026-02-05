@@ -17,6 +17,9 @@ export class Server {
   @Column({ length: 500 })
   name: string;
 
+  @Column({ length: 500, nullable: true })
+  img: string;
+
   @OneToMany(() => ServerMember, (sm) => sm.server)
   memberships: ServerMember[];
 

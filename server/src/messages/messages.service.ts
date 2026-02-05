@@ -76,7 +76,11 @@ export class MessagesService {
     return this.messageRepository.save(message);
   }
 
-  async createSystemMessage(channelId: number, content: string, userId: number) {
+  async createSystemMessage(
+    channelId: number,
+    content: string,
+    userId: number,
+  ) {
     const channel = await this.channelRepository.findOne({
       where: { id: channelId },
     });
@@ -93,6 +97,7 @@ export class MessagesService {
 
     const message = this.messageRepository.create({
       content,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       type: MessageType.System,
       author: user,
       channel: channel,

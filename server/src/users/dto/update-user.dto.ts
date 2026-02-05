@@ -21,5 +21,9 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @IsOptional()
   @IsString()
+  img: string;
+
+  @IsOptional()
+  @IsString()
   password: string;
 }

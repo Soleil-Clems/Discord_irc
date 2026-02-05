@@ -4,4 +4,5 @@ export enum MessageType {
   Image = 'img',
   File = 'file',
   System = 'system',
+  Gif = 'gif',
 }
