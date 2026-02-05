@@ -14,6 +14,7 @@ import {
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
 
 import { ConversationsService } from './conversations.service';
+import { ConversationsGateway } from './conversations.gateway';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { CreatePrivateMessageDto } from './dto/create-private-message.dto';
 import { UpdatePrivateMessageDto } from './dto/update-private-message.dto';
@@ -21,7 +22,10 @@ import { UpdatePrivateMessageDto } from './dto/update-private-message.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('conversations')
 export class ConversationsController {
-  constructor(private readonly conversationsService: ConversationsService) {}
+  constructor(
+    private readonly conversationsService: ConversationsService,
+    private readonly conversationsGateway: ConversationsGateway,
+  ) {}
 
   @Post()
   createOrGet(@Request() req, @Body() dto: CreateConversationDto) {
@@ -63,16 +67,35 @@ export class ConversationsController {
   }
 
   @Patch('messages/:id')
-  updateMessage(
+  async updateMessage(
     @Request() req,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePrivateMessageDto,
   ) {
-    return this.conversationsService.updateMessage(id, dto, req.user.id);
+    const updatedMessage = await this.conversationsService.updateMessage(
+      id,
+      dto,
+      req.user.id,
+    );
+    const user1Id = updatedMessage.conversation.user1.id;
+    const user2Id = updatedMessage.conversation.user2.id;
+    this.conversationsGateway.server
+      .to(`user:${user1Id}`)
+      .to(`user:${user2Id}`)
+      .emit('privateMessageUpdated', updatedMessage);
+    return updatedMessage;
   }
 
   @Delete('messages/:id')
-  removeMessage(@Request() req, @Param('id', ParseIntPipe) id: number) {
-    return this.conversationsService.removeMessage(id, req.user.id);
+  async removeMessage(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    const result = await this.conversationsService.removeMessage(
+      id,
+      req.user.id,
+    );
+    this.conversationsGateway.server
+      .to(`user:${result.user1Id}`)
+      .to(`user:${result.user2Id}`)
+      .emit('privateMessageDeleted', result.messageId);
+    return result;
   }
 }

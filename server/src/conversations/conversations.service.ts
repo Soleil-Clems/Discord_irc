@@ -199,8 +199,12 @@ export class ConversationsService {
       throw new ForbiddenException('Suppression non autorisée');
     }
 
+    const conversationId = message.conversation.id;
+    const user1Id = message.conversation.user1.id;
+    const user2Id = message.conversation.user2.id;
+
     await this.privateMessageRepository.remove(message);
-    return { success: true };
+    return { success: true, messageId, conversationId, user1Id, user2Id };
   }
 
   async getOtherUser(conversationId: number, userId: number): Promise<Users> {

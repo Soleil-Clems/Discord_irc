@@ -10,8 +10,8 @@ import {
 import { WsJwtGuard } from '../auth/ws-jwt.guard';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { UpdateMessageDto } from './dto/update-message.dto';
 import { Socket, Server } from 'socket.io';
-// import { UpdateMessageDto } from './dto/update-message.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UseGuards } from '@nestjs/common';
 import { WsUser } from '@/auth/decorators/ws-user.decorator';
@@ -84,16 +84,35 @@ export class MessagesGateway
       isTyping: data.isTyping,
     });
   }
+
   // @SubscribeMessage('findOneMessage')
   // findOne(@MessageBody() id: number) {
   //   return this.messagesService.findOne(id);
   // }
-  // @SubscribeMessage('updateMessage')
-  // update(@MessageBody() updateMessageDto: UpdateMessageDto) {
-  //   return this.messagesService.update(updateMessageDto.id, updateMessageDto);
-  // }
-  // @SubscribeMessage('removeMessage')
-  // remove(@MessageBody() id: number) {
-  //   return this.messagesService.remove(id);
-  // }
+
+  @SubscribeMessage('updateMessage')
+  async update(
+    @WsUser() user: any,
+    @MessageBody() data: { messageId: number; channelId: number } & UpdateMessageDto,
+  ) {
+    const updatedMessage = await this.messagesService.update(
+      data.messageId,
+      { content: data.content },
+      user.id,
+    );
+    const roomName = `channel_${data.channelId}`;
+    this.server.to(roomName).emit('messageUpdated', updatedMessage);
+    return updatedMessage;
+  }
+
+  @SubscribeMessage('deleteMessage')
+  async remove(
+    @WsUser() user: any,
+    @MessageBody() data: { messageId: number; channelId: number },
+  ) {
+    const result = await this.messagesService.remove(data.messageId, user.id);
+    const roomName = `channel_${data.channelId}`;
+    this.server.to(roomName).emit('messageDeleted', { messageId: data.messageId });
+    return result;
+  }
 }

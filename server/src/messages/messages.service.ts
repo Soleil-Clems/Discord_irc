@@ -123,6 +123,7 @@ export class MessagesService {
       where: { id: messageId },
       relations: {
         author: true,
+        channel: true,
       },
     });
 
@@ -135,7 +136,12 @@ export class MessagesService {
     }
 
     Object.assign(message, updateMessageDto);
-    return this.messageRepository.save(message);
+    await this.messageRepository.save(message);
+
+    return this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: { author: true, channel: true },
+    });
   }
 
   async remove(messageId: number, userId: number) {
@@ -153,9 +159,11 @@ export class MessagesService {
       throw new NotFoundException('Message introuvable');
     }
 
+    const channelId = message.channel.id;
+
     if (message.author.id === userId) {
       await this.messageRepository.remove(message);
-      return { success: true };
+      return { success: true, messageId, channelId };
     }
 
     const member = await this.serverMemberRepository.findOne({
@@ -173,6 +181,6 @@ export class MessagesService {
     }
 
     await this.messageRepository.remove(message);
-    return { success: true };
+    return { success: true, messageId, channelId };
   }
 }

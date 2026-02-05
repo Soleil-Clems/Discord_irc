@@ -507,6 +507,47 @@ export class ServersService {
     return this.serverMemberRepository.save(target);
   }
 
+  async transferOwnership(
+    serverId: number,
+    requesterId: number,
+    newOwnerId: number,
+  ) {
+    if (requesterId === newOwnerId) {
+      throw new BadRequestException('Vous êtes déjà le propriétaire');
+    }
+
+    const requester = await this.serverMemberRepository.findOne({
+      where: {
+        server: { id: serverId },
+        members: { id: requesterId },
+      },
+    });
+
+    if (!requester || requester.role !== ServerRole.Owner) {
+      throw new ForbiddenException(
+        'Seul le propriétaire peut transférer la propriété',
+      );
+    }
+
+    const newOwner = await this.serverMemberRepository.findOne({
+      where: {
+        server: { id: serverId },
+        members: { id: newOwnerId },
+      },
+    });
+
+    if (!newOwner) {
+      throw new NotFoundException('Membre introuvable');
+    }
+
+    newOwner.role = ServerRole.Owner;
+    requester.role = ServerRole.Admin;
+
+    await this.serverMemberRepository.save([newOwner, requester]);
+
+    return { success: true, message: 'Propriété transférée avec succès' };
+  }
+
   async leaveServer(serverId: number, userId: number, newOwnerId?: number) {
     const membership = await this.serverMemberRepository.findOne({
       where: {

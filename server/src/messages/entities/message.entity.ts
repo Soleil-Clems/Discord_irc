@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Users } from '@/users/entities/users.entity';
 import { Channel } from '@/channels/entities/channel.entity';
@@ -36,4 +37,7 @@ export class Message {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

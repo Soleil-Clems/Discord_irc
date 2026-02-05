@@ -13,13 +13,17 @@ import {
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
 
 import { MessagesService } from './messages.service';
+import { MessagesGateway } from './messages.gateway';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('messages')
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(
+    private readonly messagesService: MessagesService,
+    private readonly messagesGateway: MessagesGateway,
+  ) {}
 
   @Post()
   create(@Request() req, @Body() dto: CreateMessageDto) {
@@ -32,16 +36,24 @@ export class MessagesController {
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Request() req,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateMessageDto,
   ) {
-    return this.messagesService.update(id, dto, req.user.id);
+    const updatedMessage = await this.messagesService.update(id, dto, req.user.id);
+    if (updatedMessage) {
+      const roomName = `channel_${updatedMessage.channel.id}`;
+      this.messagesGateway.server.to(roomName).emit('messageUpdated', updatedMessage);
+    }
+    return updatedMessage;
   }
 
   @Delete(':id')
-  remove(@Request() req, @Param('id', ParseIntPipe) id: number) {
-    return this.messagesService.remove(id, req.user.id);
+  async remove(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    const result = await this.messagesService.remove(id, req.user.id);
+    const roomName = `channel_${result.channelId}`;
+    this.messagesGateway.server.to(roomName).emit('messageDeleted', result.messageId);
+    return result;
   }
 }
