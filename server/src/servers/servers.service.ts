@@ -375,10 +375,7 @@ export class ServersService {
       });
     }
 
-    const [members, total] = await qb
-      .skip(skip)
-      .take(limit)
-      .getManyAndCount();
+    const [members, total] = await qb.skip(skip).take(limit).getManyAndCount();
 
     return {
       data: members,
