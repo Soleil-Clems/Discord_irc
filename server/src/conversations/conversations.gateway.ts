@@ -64,12 +64,18 @@ export class ConversationsGateway
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       client.userId = userId;
 
-      if (!this.userSockets.has(userId)) {
+      const isFirstSocket = !this.userSockets.has(userId);
+
+      if (isFirstSocket) {
         this.userSockets.set(userId, new Set());
       }
       this.userSockets.get(userId)!.add(client.id);
 
       client.join(`user:${userId}`);
+
+      if (isFirstSocket) {
+        this.server.emit('userOnline', { userId });
+      }
     } catch {
       client.disconnect();
     }
@@ -82,6 +88,7 @@ export class ConversationsGateway
         userSocketSet.delete(client.id);
         if (userSocketSet.size === 0) {
           this.userSockets.delete(client.userId);
+          this.server.emit('userOffline', { userId: client.userId });
         }
       }
     }
@@ -106,6 +113,35 @@ export class ConversationsGateway
     } catch {
       return null;
     }
+  }
+
+  getOnlineUsers(): number[] {
+    return Array.from(this.userSockets.keys());
+  }
+
+  isUserOnline(userId: number): boolean {
+    return this.userSockets.has(userId);
+  }
+
+  @SubscribeMessage('getOnlineUsers')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleGetOnlineUsers(@ConnectedSocket() client: Socket) {
+    const onlineUserIds = this.getOnlineUsers();
+    return { onlineUserIds };
+  }
+
+  @SubscribeMessage('getAllUsersStatus')
+  async handleGetAllUsersStatus() {
+    const allUsers = await this.userRepository.find({
+      select: ['id', 'username', 'img'],
+    });
+
+    const usersStatus = allUsers.map((user) => ({
+      ...user,
+      isOnline: this.userSockets.has(user.id),
+    }));
+
+    return { users: usersStatus };
   }
 
   @SubscribeMessage('sendPrivateMessage')
