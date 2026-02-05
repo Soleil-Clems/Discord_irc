@@ -93,7 +93,8 @@ export class MessagesGateway
   @SubscribeMessage('updateMessage')
   async update(
     @WsUser() user: any,
-    @MessageBody() data: { messageId: number; channelId: number } & UpdateMessageDto,
+    @MessageBody()
+    data: { messageId: number; channelId: number } & UpdateMessageDto,
   ) {
     const updatedMessage = await this.messagesService.update(
       data.messageId,
@@ -112,7 +113,9 @@ export class MessagesGateway
   ) {
     const result = await this.messagesService.remove(data.messageId, user.id);
     const roomName = `channel_${data.channelId}`;
-    this.server.to(roomName).emit('messageDeleted', { messageId: data.messageId });
+    this.server
+      .to(roomName)
+      .emit('messageDeleted', { messageId: data.messageId });
     return result;
   }
 }

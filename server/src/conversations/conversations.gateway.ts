@@ -207,7 +207,10 @@ export class ConversationsGateway
   async handleUpdatePrivateMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody()
-    data: { messageId: number; conversationId: number } & UpdatePrivateMessageDto,
+    data: {
+      messageId: number;
+      conversationId: number;
+    } & UpdatePrivateMessageDto,
   ) {
     try {
       const userId = await this.getUserIdFromSocket(client);

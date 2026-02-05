@@ -9,6 +9,10 @@ import {
   Delete,
   HttpStatus,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,11 +23,40 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { Roles } from './decorators/roles.decorator';
 import { RolesGuard } from './guards/roles.guard';
 import { Role } from './enums/roles.enum';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { DmsService, FileCategory } from '@/dms/dms.service';
+import { MimeTypeValidator } from '@/common/validators/mime-type.validator';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+const ALLOWED_MIME_TYPES = {
+  img: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+  voice: [
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    'audio/ogg',
+    'audio/m4a',
+    'audio/webm',
+  ],
+  file: [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv',
+  ],
+} as const;
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly dmsService: DmsService,
+  ) {}
 
   @Public()
   @Post()
@@ -75,5 +108,44 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
+  }
+
+  @UseInterceptors(FileInterceptor('file'))
+  @Patch('picture/:id')
+  async updatePicture(
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    id: number,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MimeTypeValidator({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            mimeTypes: ALLOWED_MIME_TYPES.img as any,
+          }),
+          new MaxFileSizeValidator({
+            maxSize: MAX_FILE_SIZE,
+            message: 'Image is too large. Max file size is 10MB',
+          }),
+        ],
+        fileIsRequired: true,
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    // Upload du fichier
+    const uploadResult = await this.dmsService.uploadSingleFile({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      file,
+      category: FileCategory.Image,
+    });
+
+    const updateDto: UpdateUserDto = {
+      img: uploadResult.url,
+    };
+
+    return await this.usersService.update(id, updateDto);
   }
 }
