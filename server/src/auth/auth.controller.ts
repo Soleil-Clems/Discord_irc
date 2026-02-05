@@ -16,10 +16,14 @@ import { UserDto } from 'src/users/dto/user.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { LogoutDto } from './dto/logout.dto';
 import { jwtConstants } from './constant';
+import { UsersService } from '@/users/users.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UsersService,
+  ) {}
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -98,6 +102,6 @@ export class AuthController {
   @Get('me')
   getProfile(@Request() req) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return req.user;
+    return this.userService.findOne(req.userId);
   }
 }
