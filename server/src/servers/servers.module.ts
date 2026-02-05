@@ -14,12 +14,14 @@ import { ServerBan } from './entities/server-ban.entity';
 import { jwtConstants } from '@/auth/constant';
 import { ChannelsModule } from '@/channels/channels.module';
 import { MessagesModule } from '@/messages/messages.module';
+import { DmsModule } from '@/dms/dms.module';
 
 @Module({
   imports: [
     UsersModule,
     ChannelsModule,
     MessagesModule,
+    DmsModule,
     TypeOrmModule.forFeature([
       Users,
       Server,

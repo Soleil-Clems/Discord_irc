@@ -10,6 +10,7 @@ import { Conversation } from './entities/conversation.entity';
 import { PrivateMessage } from './entities/private-message.entity';
 import { Users } from '@/users/entities/users.entity';
 import { jwtConstants } from '@/auth/constant';
+import { DmsModule } from '@/dms/dms.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { jwtConstants } from '@/auth/constant';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '5m' },
     }),
+    DmsModule,
   ],
   providers: [ConversationsGateway, ConversationsService],
   controllers: [ConversationsController],
