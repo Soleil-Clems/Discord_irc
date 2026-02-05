@@ -18,6 +18,7 @@ import { ServerRole } from './enums/server-role.enum';
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
+import { GetMembersQueryDto } from './dto/get-members-query.dto';
 import { ChannelsService } from '@/channels/channels.service';
 import { ChannelType } from '@/channels/enums/channel-type.enum';
 import { MessagesService } from '@/messages/messages.service';
@@ -331,6 +332,65 @@ export class ServersService {
     }
 
     return server;
+  }
+
+  async getMembers(
+    serverId: number,
+    requesterId: number,
+    query: GetMembersQueryDto,
+  ) {
+    const requesterMembership = await this.serverMemberRepository.findOne({
+      where: {
+        server: { id: serverId },
+        members: { id: requesterId },
+      },
+    });
+
+    if (!requesterMembership) {
+      throw new ForbiddenException('Vous ne faites pas partie de ce serveur');
+    }
+
+    const { page = 1, limit = 20, search } = query;
+    const skip = (page - 1) * limit;
+
+    const qb = this.serverMemberRepository
+      .createQueryBuilder('membership')
+      .leftJoinAndSelect('membership.members', 'user')
+      .addSelect(
+        `CASE
+          WHEN membership.role = 'server_owner' THEN 1
+          WHEN membership.role = 'server_admin' THEN 2
+          WHEN membership.role = 'server_moderator' THEN 3
+          ELSE 4
+        END`,
+        'role_priority',
+      )
+      .where('membership.serverId = :serverId', { serverId })
+      .orderBy('role_priority', 'ASC')
+      .addOrderBy('user.username', 'ASC');
+
+    if (search) {
+      qb.andWhere('LOWER(user.username) LIKE LOWER(:search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    const [members, total] = await qb
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: members,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async update(

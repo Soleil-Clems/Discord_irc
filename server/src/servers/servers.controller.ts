@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { ChangeRoleDto } from './dto/change-role.dto';
 import { LeaveServerDto } from './dto/leave-server.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { BanUserDto } from './dto/ban-user.dto';
+import { GetMembersQueryDto } from './dto/get-members-query.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('servers')
@@ -83,6 +85,15 @@ export class ServersController {
   @Post(':id/join')
   join(@Request() req, @Param('id', ParseIntPipe) serverId: number) {
     return this.serversService.joinServer(serverId, req.user.id);
+  }
+
+  @Get(':id/members')
+  getMembers(
+    @Request() req,
+    @Param('id', ParseIntPipe) serverId: number,
+    @Query() query: GetMembersQueryDto,
+  ) {
+    return this.serversService.getMembers(serverId, req.user.id, query);
   }
 
   @Post(':id/leave')
