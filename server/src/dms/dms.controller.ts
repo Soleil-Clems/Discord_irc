@@ -78,6 +78,7 @@ export class DmsController {
     });
   }
 
+  // Upload de fichier générique
   @Post('/upload/file')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
