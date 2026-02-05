@@ -19,6 +19,7 @@ import { UpdateServerDto } from './dto/update-server.dto';
 import { ServersService } from './servers.service';
 import { ChangeRoleDto } from './dto/change-role.dto';
 import { LeaveServerDto } from './dto/leave-server.dto';
+import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { BanUserDto } from './dto/ban-user.dto';
 import { GetMembersQueryDto } from './dto/get-members-query.dto';
@@ -79,6 +80,19 @@ export class ServersController {
       req.user.id,
       dto.memberId,
       dto.role,
+    );
+  }
+
+  @Post(':id/transfer-ownership')
+  transferOwnership(
+    @Request() req,
+    @Param('id', ParseIntPipe) serverId: number,
+    @Body() dto: TransferOwnershipDto,
+  ) {
+    return this.serversService.transferOwnership(
+      serverId,
+      req.user.id,
+      dto.newOwnerId,
     );
   }
 
