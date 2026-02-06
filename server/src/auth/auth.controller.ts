@@ -6,37 +6,106 @@ import {
   HttpCode,
   HttpStatus,
   Get,
+  Body,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { LocalAuthGuard } from './local.auth.guard';
 import { AuthService } from './auth.service';
 import { UserDto } from 'src/users/dto/user.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { LogoutDto } from './dto/logout.dto';
+import { jwtConstants } from './constant';
+import { UsersService } from '@/users/users.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UsersService,
+  ) {}
+
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Request() req) {
+  async login(@Request() req, @Res({ passthrough: true }) res: Response) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const user: UserDto = req.user;
 
-    return this.authService.login(user);
+    const tokens = await this.authService.login(user);
+
+    res.cookie('refresh_token', tokens.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: jwtConstants.refreshTokenExpiresInMs,
+    });
+
+    return {
+      access_token: tokens.access_token,
+      expires_in: tokens.expires_in,
+      user: tokens.user,
+    };
   }
 
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const refreshToken: string = req.cookies?.refresh_token;
+
+    if (!refreshToken) {
+      return { message: 'Refresh token manquant', statusCode: 401 };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const tokens = await this.authService.refreshTokens(refreshToken);
+
+    return {
+      access_token: tokens.access_token,
+      expires_in: tokens.expires_in,
+      user: tokens.user,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  logout() {
-    return {
-      message: 'Déconnexion réussie',
-    };
+  async logout(
+    @Request() req,
+    @Body() logoutDto: LogoutDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const userId: number = req.user.id;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const refreshToken: string =
+      logoutDto.refresh_token || req.cookies?.refresh_token;
+
+    res.clearCookie('refresh_token');
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.authService.logout(userId, refreshToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
+  logoutAll(@Request() req, @Res({ passthrough: true }) res: Response) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const userId: number = req.user.id;
+
+    res.clearCookie('refresh_token');
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.authService.logoutAll(userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return req.user;
+    console.log(req);
+    return this.userService.findOne(req.user.id);
   }
 }

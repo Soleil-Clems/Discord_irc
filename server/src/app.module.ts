@@ -5,6 +5,9 @@ import { AuthModule } from './auth/auth.module';
 import { ServersModule } from './servers/servers.module';
 import { ChannelsModule } from './channels/channels.module';
 import { MessagesModule } from './messages/messages.module';
+import { ConversationsModule } from './conversations/conversations.module';
+import { DmsModule } from './dms/dms.module';
+import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -22,6 +25,13 @@ import { MessagesModule } from './messages/messages.module';
     ServersModule,
     ChannelsModule,
     MessagesModule,
+    ConversationsModule,
+    DmsModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+      ignoreEnvFile: false,
+    }),
   ],
 })
 export class AppModule {}

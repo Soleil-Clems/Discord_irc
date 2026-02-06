@@ -67,12 +67,10 @@ export class ChannelsService {
   }
 
   async findAll(serverId: number) {
-    return this.channelRepository.find({
-      where: {
-        server: { id: serverId },
-      },
-      order: {
-        createdAt: 'ASC',
+    return this.serverRepository.find({
+      where: { id: serverId },
+      relations: {
+        channels: true,
       },
     });
   }
@@ -82,6 +80,9 @@ export class ChannelsService {
       where: { id: channelId },
       relations: {
         server: true,
+        messages: {
+          author: true,
+        },
       },
     });
 

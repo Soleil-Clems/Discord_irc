@@ -14,6 +14,8 @@ import { ServerRole } from '@/servers/enums/server-role.enum';
 
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
+import { ChannelType } from '@/channels/enums/channel-type.enum';
+import { MessageType } from './enums/message-type.enum';
 
 @Injectable()
 export class MessagesService {
@@ -39,6 +41,12 @@ export class MessagesService {
 
     if (!channel) {
       throw new NotFoundException('Channel introuvable');
+    }
+
+    if (channel.type !== ChannelType.Text) {
+      throw new NotFoundException(
+        "Impossible d'envoyer des messages dans un channel call.",
+      );
     }
 
     const member = await this.serverMemberRepository.findOne({
@@ -68,6 +76,36 @@ export class MessagesService {
     return this.messageRepository.save(message);
   }
 
+  async createSystemMessage(
+    channelId: number,
+    content: string,
+    userId: number,
+  ) {
+    const channel = await this.channelRepository.findOne({
+      where: { id: channelId },
+    });
+
+    if (!channel) {
+      throw new NotFoundException('Channel introuvable');
+    }
+
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    const message = this.messageRepository.create({
+      content,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      type: MessageType.System,
+      author: user,
+      channel: channel,
+    });
+
+    return this.messageRepository.save(message);
+  }
+
   async findAll(channelId: number) {
     return this.messageRepository.find({
       where: { channel: { id: channelId } },
@@ -85,6 +123,7 @@ export class MessagesService {
       where: { id: messageId },
       relations: {
         author: true,
+        channel: true,
       },
     });
 
@@ -97,7 +136,12 @@ export class MessagesService {
     }
 
     Object.assign(message, updateMessageDto);
-    return this.messageRepository.save(message);
+    await this.messageRepository.save(message);
+
+    return this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: { author: true, channel: true },
+    });
   }
 
   async remove(messageId: number, userId: number) {
@@ -115,9 +159,11 @@ export class MessagesService {
       throw new NotFoundException('Message introuvable');
     }
 
+    const channelId = message.channel.id;
+
     if (message.author.id === userId) {
       await this.messageRepository.remove(message);
-      return { success: true };
+      return { success: true, messageId, channelId };
     }
 
     const member = await this.serverMemberRepository.findOne({
@@ -135,6 +181,6 @@ export class MessagesService {
     }
 
     await this.messageRepository.remove(message);
-    return { success: true };
+    return { success: true, messageId, channelId };
   }
 }

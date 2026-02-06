@@ -8,16 +8,17 @@ import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constant';
 import { JwtStrategy } from './jwt.strategy';
 import { Users } from '@/users/entities/users.entity';
+import { RefreshToken } from './entities/refresh-token.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
     UsersModule,
-    TypeOrmModule.forFeature([Users]),
+    TypeOrmModule.forFeature([Users, RefreshToken]),
     PassportModule,
     JwtModule.register({
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '7D' },
     }),
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],

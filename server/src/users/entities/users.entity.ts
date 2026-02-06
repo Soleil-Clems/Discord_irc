@@ -32,6 +32,12 @@ export class Users {
   @Column({ length: 500 })
   password: string;
 
+  @Column({ length: 500, nullable: true })
+  img: string;
+
+  @Column({ nullable: true })
+  description: string;
+
   @Column({ type: 'datetime', name: 'last_seen', nullable: true })
   lastSeen: Date;
 
