@@ -17,6 +17,7 @@ import {
 import { CreateServerDto } from './dto/create-server.dto';
 import { UpdateServerDto } from './dto/update-server.dto';
 import { ServersService } from './servers.service';
+import { ServersGateway } from './servers.gateway';
 import { ChangeRoleDto } from './dto/change-role.dto';
 import { LeaveServerDto } from './dto/leave-server.dto';
 import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
@@ -27,7 +28,10 @@ import { GetMembersQueryDto } from './dto/get-members-query.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('servers')
 export class ServersController {
-  constructor(private readonly serversService: ServersService) {}
+  constructor(
+    private readonly serversService: ServersService,
+    private readonly serversGateway: ServersGateway,
+  ) {}
 
   @Post()
   async create(@Request() req, @Body() createServerDto: CreateServerDto) {
@@ -70,30 +74,42 @@ export class ServersController {
   }
 
   @Patch(':id/members/role')
-  changeRole(
+  async changeRole(
     @Request() req,
     @Param('id', ParseIntPipe) serverId: number,
     @Body() dto: ChangeRoleDto,
   ) {
-    return this.serversService.changeMemberRole(
+    const result = await this.serversService.changeMemberRole(
       serverId,
       req.user.id,
       dto.memberId,
       dto.role,
     );
+    this.serversGateway.server.emit('memberRoleChanged', {
+      serverId,
+      memberId: dto.memberId,
+      role: dto.role,
+    });
+    return result;
   }
 
   @Post(':id/transfer-ownership')
-  transferOwnership(
+  async transferOwnership(
     @Request() req,
     @Param('id', ParseIntPipe) serverId: number,
     @Body() dto: TransferOwnershipDto,
   ) {
-    return this.serversService.transferOwnership(
+    const result = await this.serversService.transferOwnership(
       serverId,
       req.user.id,
       dto.newOwnerId,
     );
+    this.serversGateway.server.emit('memberRoleChanged', {
+      serverId,
+      memberId: dto.newOwnerId,
+      role: 'server_owner',
+    });
+    return result;
   }
 
   @Post(':id/join')
