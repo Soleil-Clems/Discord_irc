@@ -58,6 +58,7 @@ export class AuthController {
       return { message: 'Refresh token manquant', statusCode: 401 };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const tokens = await this.authService.refreshTokens(refreshToken);
 
     return {
@@ -83,6 +84,7 @@ export class AuthController {
 
     res.clearCookie('refresh_token');
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.authService.logout(userId, refreshToken);
   }
 
@@ -95,6 +97,7 @@ export class AuthController {
 
     res.clearCookie('refresh_token');
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.authService.logoutAll(userId);
   }
 
@@ -102,6 +105,7 @@ export class AuthController {
   @Get('me')
   getProfile(@Request() req) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return this.userService.findOne(req.userId);
+    console.log(req);
+    return this.userService.findOne(req.user.id);
   }
 }
