@@ -600,15 +600,6 @@ export class ServersService {
       throw new ForbiddenException('Vous ne faites pas partie du serveur');
     }
 
-    if (
-      membership.role !== ServerRole.Owner &&
-      membership.role !== ServerRole.Admin
-    ) {
-      throw new ForbiddenException(
-        'Seuls les admins peuvent créer des invitations',
-      );
-    }
-
     const code = crypto.randomBytes(8).toString('hex');
 
     const expiresAt = dto.expiresIn

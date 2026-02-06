@@ -172,17 +172,22 @@ export class ServersController {
   }
 
   @Post(':id/bans')
-  banUser(
+  async banUser(
     @Request() req,
     @Param('id', ParseIntPipe) serverId: number,
     @Body() dto: BanUserDto,
   ) {
-    return this.serversService.banUser(
+    const result = await this.serversService.banUser(
       serverId,
       req.user.id,
       dto.userId,
       dto.reason,
     );
+    this.serversGateway.server.emit('memberBanned', {
+      serverId,
+      userId: dto.userId,
+    });
+    return result;
   }
 
   @Delete(':id/bans/:userId')
