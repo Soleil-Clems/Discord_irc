@@ -2,7 +2,8 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { jwtConstants } from './constant';
+import { jwtConstants } from '../constant';
+import { JwtPayload } from '../interfaces/jwt-payload.interface';
 
 @Injectable()
 export class WsJwtGuard implements CanActivate {
@@ -25,7 +26,7 @@ export class WsJwtGuard implements CanActivate {
 
       // Attache le user au client socket pour pouvoir le récupérer plus tard
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      client.data.user = payload;
+      client.data.user = payload as JwtPayload;
 
       return true;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

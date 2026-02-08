@@ -45,7 +45,6 @@ export class DmsController {
     @Query('isPublic') isPublic?: string,
   ) {
     return this.dmsService.uploadSingleFile({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       file,
       category: FileCategory.Image,
       isPublic: isPublic !== 'false',
@@ -71,14 +70,12 @@ export class DmsController {
     @Query('isPublic') isPublic?: string,
   ) {
     return this.dmsService.uploadSingleFile({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       file,
       category: FileCategory.Voice,
       isPublic: isPublic !== 'false',
     });
   }
 
-  // Upload de fichier générique
   @Post('/upload/file')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
@@ -98,7 +95,6 @@ export class DmsController {
     @Query('isPublic') isPublic?: string,
   ) {
     return this.dmsService.uploadSingleFile({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       file,
       category: FileCategory.File,
       isPublic: isPublic !== 'false',

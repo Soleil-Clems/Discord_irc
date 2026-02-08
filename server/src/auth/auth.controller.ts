@@ -10,10 +10,10 @@ import {
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { LocalAuthGuard } from './local.auth.guard';
+import { LocalAuthGuard } from './guards/local.auth.guard';
 import { AuthService } from './auth.service';
 import { UserDto } from 'src/users/dto/user.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LogoutDto } from './dto/logout.dto';
 import { jwtConstants } from './constant';
 import { UsersService } from '@/users/users.service';
@@ -50,15 +50,14 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Request() req, @Res({ passthrough: true }) res: Response) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  async refresh(@Request() req) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const refreshToken: string = req.cookies?.refresh_token;
 
     if (!refreshToken) {
       return { message: 'Refresh token manquant', statusCode: 401 };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const tokens = await this.authService.refreshTokens(refreshToken);
 
     return {
@@ -76,15 +75,15 @@ export class AuthController {
     @Body() logoutDto: LogoutDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const userId: number = req.user.id;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const refreshToken: string =
       logoutDto.refresh_token || req.cookies?.refresh_token;
 
     res.clearCookie('refresh_token');
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.authService.logout(userId, refreshToken);
   }
 
@@ -92,20 +91,17 @@ export class AuthController {
   @Post('logout-all')
   @HttpCode(HttpStatus.OK)
   logoutAll(@Request() req, @Res({ passthrough: true }) res: Response) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const userId: number = req.user.id;
 
     res.clearCookie('refresh_token');
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.authService.logoutAll(userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    console.log(req);
     return this.userService.findOne(req.user.id);
   }
 }
