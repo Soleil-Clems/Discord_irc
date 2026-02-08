@@ -11,8 +11,8 @@ import {
 
   // MessageBody,
 } from '@nestjs/websockets';
-import { WsJwtGuard } from '../auth/ws-jwt.guard';
-import { Server, Socket } from 'socket.io';
+import { WsJwtGuard } from '@/auth/guards/ws-jwt.guard';
+import { Server } from 'socket.io';
 import { ServersService } from './servers.service';
 // import { CreateServerDto } from './dto/create-server.dto';
 // import { UpdateServerDto } from './dto/update-server.dto';
@@ -20,12 +20,7 @@ import { JwtService } from '@nestjs/jwt';
 import { WsUser } from '@/auth/decorators/ws-user.decorator';
 import { UseGuards } from '@nestjs/common';
 
-@WebSocketGateway({
-  cors: {
-    origin: 'http://localhost:3000',
-    credentials: true,
-  },
-})
+@WebSocketGateway()
 @UseGuards(WsJwtGuard)
 export class ServersGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -38,13 +33,9 @@ export class ServersGateway
     private readonly jwtService: JwtService,
   ) {}
 
-  handleConnection(client: Socket) {
-    console.log(`Client WebSocket connecté: ${client.id}`);
-  }
+  handleConnection() {}
 
-  handleDisconnect(client: Socket) {
-    console.log(`Client WebSocket déconnecté: ${client.id}`);
-  }
+  handleDisconnect() {}
 
   // @SubscribeMessage('createServer')
   // create(@MessageBody() createServerDto: CreateServerDto) {

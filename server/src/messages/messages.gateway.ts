@@ -7,7 +7,7 @@ import {
   ConnectedSocket,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { WsJwtGuard } from '../auth/ws-jwt.guard';
+import { WsJwtGuard } from '@/auth/guards/ws-jwt.guard';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
@@ -16,12 +16,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UseGuards } from '@nestjs/common';
 import { WsUser } from '@/auth/decorators/ws-user.decorator';
 
-@WebSocketGateway({
-  cors: {
-    origin: 'http://localhost:3000',
-    credentials: true,
-  },
-})
+@WebSocketGateway()
 @UseGuards(WsJwtGuard)
 export class MessagesGateway
   implements OnGatewayConnection, OnGatewayDisconnect
@@ -53,7 +48,7 @@ export class MessagesGateway
   }
 
   @SubscribeMessage('joinChannel')
-  findAll(
+  async findAll(
     @WsUser() user: any,
     @ConnectedSocket() client: Socket,
     @MessageBody() channelId: number,
@@ -64,8 +59,7 @@ export class MessagesGateway
       if (room !== client.id) client.leave(room);
     });
 
-    client.join(roomName);
-    console.log(`Socket ${client.id} a rejoint la room : ${roomName}`);
+    await client.join(roomName);
     return this.messagesService.findAll(channelId);
   }
 
@@ -76,7 +70,6 @@ export class MessagesGateway
     @WsUser() user: any,
   ) {
     const roomName = `channel_${data.channelId}`;
-    console.log(user.username, 'is typing in room', roomName);
 
     client.to(roomName).emit('userTyping', {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

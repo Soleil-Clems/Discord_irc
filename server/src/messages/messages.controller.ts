@@ -10,7 +10,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 
 import { MessagesService } from './messages.service';
 import { MessagesGateway } from './messages.gateway';
@@ -41,10 +41,16 @@ export class MessagesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateMessageDto,
   ) {
-    const updatedMessage = await this.messagesService.update(id, dto, req.user.id);
+    const updatedMessage = await this.messagesService.update(
+      id,
+      dto,
+      req.user.id,
+    );
     if (updatedMessage) {
       const roomName = `channel_${updatedMessage.channel.id}`;
-      this.messagesGateway.server.to(roomName).emit('messageUpdated', updatedMessage);
+      this.messagesGateway.server
+        .to(roomName)
+        .emit('messageUpdated', updatedMessage);
     }
     return updatedMessage;
   }
@@ -53,7 +59,9 @@ export class MessagesController {
   async remove(@Request() req, @Param('id', ParseIntPipe) id: number) {
     const result = await this.messagesService.remove(id, req.user.id);
     const roomName = `channel_${result.channelId}`;
-    this.messagesGateway.server.to(roomName).emit('messageDeleted', result.messageId);
+    this.messagesGateway.server
+      .to(roomName)
+      .emit('messageDeleted', result.messageId);
     return result;
   }
 }

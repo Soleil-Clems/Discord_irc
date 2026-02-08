@@ -28,7 +28,6 @@ export class DmsService {
   private endpoint: string;
 
   constructor(private readonly configService: ConfigService) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const s3_region = this.configService.get<string>('S3_REGION');
 
     if (!s3_region) {
@@ -36,47 +35,28 @@ export class DmsService {
       throw new Error('S3_REGION not found in environment variables');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const bucketName = this.configService.get<string>('S3_BUCKET_NAME');
     if (!bucketName) {
       throw new Error('S3_BUCKET_NAME not found in environment variables');
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.bucketName = bucketName;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const endpoint = this.configService.get<string>('S3_ENDPOINT');
     if (!endpoint) {
       throw new Error(
         'S3_ENDPOINT not found in environment variables (required for R2)',
       );
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     this.endpoint = endpoint;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const accessKey = this.configService.get<string>('S3_ACCESS_KEY');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const secretKey = this.configService.get<string>('S3_SECRET_ACCESS_KEY');
 
-    console.log('=== R2 Configuration ===');
-    console.log('Region:', s3_region);
-    console.log('Bucket:', bucketName);
-    console.log('Endpoint:', endpoint);
-    console.log('Access Key:', accessKey?.substring(0, 8) + '...');
-    console.log('Secret Key exists:', !!secretKey);
-    console.log('Secret Key length:', secretKey?.length);
-    console.log('========================');
-
     this.client = new S3Client({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       region: s3_region,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       endpoint: endpoint,
       credentials: {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         accessKeyId: accessKey || '',
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         secretAccessKey: secretKey || '',
       },
       forcePathStyle: true,
@@ -93,19 +73,15 @@ export class DmsService {
     isPublic?: boolean;
   }) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const fileExtension = file.originalname.split('.').pop();
       const key = `${category}/${uuidv4()}.${fileExtension}`;
 
       const command = new PutObjectCommand({
         Bucket: this.bucketName,
         Key: key,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         Body: file.buffer,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         ContentType: file.mimetype,
         Metadata: {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           originalName: file.originalname,
           category: category,
           uploadDate: new Date().toISOString(),
@@ -121,11 +97,8 @@ export class DmsService {
         key,
         category,
         isPublic,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         originalName: file.originalname,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         size: file.size,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         mimeType: file.mimetype,
       };
     } catch (error) {
@@ -139,12 +112,10 @@ export class DmsService {
   }
 
   getFileUrl(key: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const publicDomain = this.configService.get<string>('R2_PUBLIC_DOMAIN');
     if (publicDomain) {
       return { url: `${publicDomain}/${key}` };
     }
-    // Sinon utiliser l'endpoint R2
     return { url: `${this.endpoint}/${this.bucketName}/${key}` };
   }
 

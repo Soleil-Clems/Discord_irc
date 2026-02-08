@@ -23,12 +23,7 @@ interface AuthenticatedSocket extends Socket {
   userId?: number;
 }
 
-@WebSocketGateway({
-  cors: {
-    origin: 'http://localhost:3000',
-    credentials: true,
-  },
-})
+@WebSocketGateway()
 export class ConversationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
