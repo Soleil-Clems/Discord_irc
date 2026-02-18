@@ -19,6 +19,7 @@ import { ConfigModule } from '@nestjs/config';
       database: process.env.DB_NAME || 'lezom_db',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
+      timezone: 'Z',
     }),
     UsersModule,
     AuthModule,
