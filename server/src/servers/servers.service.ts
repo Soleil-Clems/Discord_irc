@@ -691,10 +691,13 @@ export class ServersService {
     return { success: true };
   }
 
-  async joinByCode(code: string, userId: number) {
+  private async findValidInvitation(
+    code: string,
+    relations: string[] = ['server'],
+  ) {
     const invitation = await this.invitationRepository.findOne({
       where: { code },
-      relations: ['server'],
+      relations,
     });
 
     if (!invitation) {
@@ -710,6 +713,34 @@ export class ServersService {
         "L'invitation a atteint le nombre maximum d'utilisations",
       );
     }
+
+    return invitation;
+  }
+
+  async previewByCode(code: string) {
+    const invitation = await this.findValidInvitation(code);
+
+    const memberCount = await this.serverMemberRepository.count({
+      where: { server: { id: invitation.server.id } },
+    });
+
+    return {
+      server: {
+        id: invitation.server.id,
+        name: invitation.server.name,
+        img: invitation.server.img,
+        memberCount,
+      },
+      invitation: {
+        expiresAt: invitation.expiresAt,
+        maxUses: invitation.maxUses,
+        usesCount: invitation.usesCount,
+      },
+    };
+  }
+
+  async joinByCode(code: string, userId: number) {
+    const invitation = await this.findValidInvitation(code);
 
     const existingMembership = await this.serverMemberRepository.findOne({
       where: {

@@ -24,6 +24,7 @@ import { TransferOwnershipDto } from './dto/transfer-ownership.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 import { BanUserDto } from './dto/ban-user.dto';
 import { GetMembersQueryDto } from './dto/get-members-query.dto';
+import { Public } from '@/auth/decorators/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('servers')
@@ -41,6 +42,12 @@ export class ServersController {
   @Get()
   async findAll(@Request() req) {
     return this.serversService.findAll(req.user.id);
+  }
+
+  @Public()
+  @Get('invite-preview/:code')
+  previewInvite(@Param('code') code: string) {
+    return this.serversService.previewByCode(code);
   }
 
   @Get(':id')
