@@ -47,19 +47,20 @@ export class DmsService {
         'S3_ENDPOINT not found in environment variables (required for R2)',
       );
     }
-    this.endpoint = endpoint;
+    this.endpoint = endpoint.replace(/\/+$/, '');
 
     const accessKey = this.configService.get<string>('S3_ACCESS_KEY');
     const secretKey = this.configService.get<string>('S3_SECRET_ACCESS_KEY');
 
     this.client = new S3Client({
       region: s3_region,
-      endpoint: endpoint,
+      endpoint: this.endpoint,
       credentials: {
         accessKeyId: accessKey || '',
         secretAccessKey: secretKey || '',
       },
-      forcePathStyle: true,
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 
@@ -82,7 +83,7 @@ export class DmsService {
         Body: file.buffer,
         ContentType: file.mimetype,
         Metadata: {
-          originalName: file.originalname,
+          originalName: encodeURIComponent(file.originalname),
           category: category,
           uploadDate: new Date().toISOString(),
         },
