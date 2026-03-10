@@ -15,6 +15,7 @@ import { Socket, Server } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { UseGuards } from '@nestjs/common';
 import { WsUser } from '@/auth/decorators/ws-user.decorator';
+import { CreateReactionDto } from './dto/create-reaction.dto';
 
 @WebSocketGateway()
 @UseGuards(WsJwtGuard)
@@ -97,6 +98,22 @@ export class MessagesGateway
     const roomName = `channel_${data.channelId}`;
     this.server.to(roomName).emit('messageUpdated', updatedMessage);
     return updatedMessage;
+  }
+
+  @SubscribeMessage('addReaction')
+  async reaction(
+    @WsUser() user: any,
+    @MessageBody()
+    data: CreateReactionDto,
+  ) {
+    const reactionMessage = await this.messagesService.reaction(
+      data.messageId,
+      data.emoji,
+      user.id,
+    );
+    const roomName = `channel_${data.channelId}`;
+    this.server.to(roomName).emit('reactionAdded', reactionMessage);
+    return reactionMessage;
   }
 
   @SubscribeMessage('deleteMessage')
