@@ -1,21 +1,21 @@
 
 services:
-  # lezom-server:
-  #   container_name: ${COMPOSE_PROJECT_NAME}-server
-  #   build: 
-  #     context: ..
-  #     dockerfile: .docker/Dockerfile
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     DB_HOST: ${DB_HOST}
-  #     DB_PORT: ${DB_PORT}
-  #     DB_USER: ${DB_USER}
-  #     DB_PASSWORD: ${DB_PASSWORD}
-  #     DB_NAME: ${DB_NAME}
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy  
+  lezom-server:
+    container_name: ${COMPOSE_PROJECT_NAME}-server
+    build: 
+      context: ..
+      dockerfile: .docker/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      mysql:
+        condition: service_healthy  
 
   mysql:
     container_name: ${COMPOSE_PROJECT_NAME}-mysql
