@@ -23,7 +23,7 @@ const CATEGORY_CONFIG: Record<
   img: {
     category: FileCategory.Image,
     maxSize: MAX_FILE_SIZE,
-    allowedTypes: /\.(png|jpe?g|gif|webp)$/i,
+    allowedTypes: /\.(png|jpe?g|gif|webp|avif)$/i,
   },
   voice: {
     category: FileCategory.Voice,
