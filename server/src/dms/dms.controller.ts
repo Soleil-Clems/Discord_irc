@@ -90,6 +90,6 @@ export class DmsController {
 
   @Get('/signed-url/:key')
   async getSignedUrl(@Param('key') key: string) {
-    return this.dmsService.getPresignedSignedUrl(key);
+    return this.dmsService.getSignedUrl(key);
   }
 }
