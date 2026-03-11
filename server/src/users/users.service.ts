@@ -67,6 +67,7 @@ export class UsersService {
           isActive: true,
           img: true,
           role: true,
+          isTwoFactorEnabled: true,
         },
       });
       if (!user) {
