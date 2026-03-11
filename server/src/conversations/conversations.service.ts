@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 
 import { Conversation } from './entities/conversation.entity';
 import { PrivateMessage } from './entities/private-message.entity';
+import { PrivateReaction } from './entities/private-reaction.entity';
 import { Users } from '@/users/entities/users.entity';
 
 import { CreateConversationDto } from './dto/create-conversation.dto';
@@ -26,6 +27,9 @@ export class ConversationsService {
 
     @InjectRepository(Users)
     private readonly userRepository: Repository<Users>,
+
+    @InjectRepository(PrivateReaction)
+    private readonly privateReactionRepository: Repository<PrivateReaction>,
   ) {}
 
   async createOrGet(
@@ -117,7 +121,7 @@ export class ConversationsService {
 
     const [messages, total] = await this.privateMessageRepository.findAndCount({
       where: { conversation: { id: conversation.id } },
-      relations: { sender: true },
+      relations: { sender: true, reactions: { author: true } },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -205,6 +209,35 @@ export class ConversationsService {
 
     await this.privateMessageRepository.remove(message);
     return { success: true, messageId, conversationId, user1Id, user2Id };
+  }
+
+  async reaction(messageId: number, emoji: string, userId: number) {
+    const message = await this.privateMessageRepository.findOne({
+      where: { id: messageId },
+      relations: { conversation: { user1: true, user2: true } },
+    });
+
+    if (!message) throw new NotFoundException('Message introuvable');
+
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const existing = await this.privateReactionRepository.findOne({
+      where: { message: { id: messageId }, author: { id: userId }, emoji },
+    });
+
+    if (existing) {
+      await this.privateReactionRepository.remove(existing);
+    } else {
+      await this.privateReactionRepository.save(
+        this.privateReactionRepository.create({ emoji, author: user, message }),
+      );
+    }
+
+    return this.privateMessageRepository.findOne({
+      where: { id: messageId },
+      relations: { sender: true, reactions: { author: true }, conversation: { user1: true, user2: true } },
+    });
   }
 
   async getOtherUser(conversationId: number, userId: number): Promise<Users> {

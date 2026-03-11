@@ -3,12 +3,14 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Users } from '@/users/entities/users.entity';
 import { Conversation } from './conversation.entity';
 import { MessageType } from '@/messages/enums/message-type.enum';
+import { PrivateReaction } from './private-reaction.entity';
 
 @Entity()
 export class PrivateMessage {
@@ -32,6 +34,9 @@ export class PrivateMessage {
     onDelete: 'CASCADE',
   })
   conversation: Conversation;
+
+  @OneToMany(() => PrivateReaction, (reaction) => reaction.message)
+  reactions: PrivateReaction[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

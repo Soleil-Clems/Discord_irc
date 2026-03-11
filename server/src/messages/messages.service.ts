@@ -16,6 +16,8 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { ChannelType } from '@/channels/enums/channel-type.enum';
 import { MessageType } from './enums/message-type.enum';
+import { Reaction } from './entities/reaction.entity';
+
 
 @Injectable()
 export class MessagesService {
@@ -28,6 +30,9 @@ export class MessagesService {
 
     @InjectRepository(Users)
     private readonly userRepository: Repository<Users>,
+
+    @InjectRepository(Reaction)
+    private readonly reactionRepository: Repository<Reaction>,
 
     @InjectRepository(ServerMember)
     private readonly serverMemberRepository: Repository<ServerMember>,
@@ -109,7 +114,7 @@ export class MessagesService {
   async findAll(channelId: number) {
     return this.messageRepository.find({
       where: { channel: { id: channelId } },
-      relations: { author: true },
+      relations: { author: true, reactions: { author: true } },
       order: { createdAt: 'ASC' },
     });
   }
@@ -141,6 +146,46 @@ export class MessagesService {
     return this.messageRepository.findOne({
       where: { id: messageId },
       relations: { author: true, channel: true },
+    });
+  }
+
+  async reaction(messageId: number, emoji: string, userId: number) {
+    const message = await this.messageRepository.findOne({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Message introuvable');
+    }
+
+    const user = await this.userRepository.findOneBy({ id: userId });
+
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    const existingReaction = await this.reactionRepository.findOne({
+      where: {
+        message: { id: messageId },
+        author: { id: userId },
+        emoji,
+      },
+    });
+
+    if (existingReaction) {
+      await this.reactionRepository.remove(existingReaction);
+    } else {
+      const reaction = this.reactionRepository.create({
+        emoji,
+        author: user,
+        message,
+      });
+      await this.reactionRepository.save(reaction);
+    }
+
+    return this.messageRepository.findOne({
+      where: { id: messageId },
+      relations: { author: true, channel: true, reactions: { author: true } },
     });
   }
 
