@@ -275,6 +275,28 @@ export class ConversationsGateway
     }
   }
 
+  @SubscribeMessage('addPrivateReaction')
+  async handleAddPrivateReaction(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { messageId: number; emoji: string; conversationId: number },
+  ) {
+    try {
+      const userId = await this.getUserIdFromSocket(client);
+      if (!userId) return { error: 'Unauthorized' };
+
+      const updatedMessage = await this.conversationsService.reaction(data.messageId, data.emoji, userId);
+      const otherUser = await this.conversationsService.getOtherUser(data.conversationId, userId);
+
+      this.server.to(`user:${otherUser.id}`).emit('privateReactionAdded', updatedMessage);
+      this.server.to(`user:${userId}`).emit('privateReactionAdded', updatedMessage);
+
+      return updatedMessage;
+    } catch (e) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      return { error: e.message };
+    }
+  }
+
   @SubscribeMessage('deletePrivateMessage')
   async handleDeletePrivateMessage(
     @ConnectedSocket() client: Socket,
