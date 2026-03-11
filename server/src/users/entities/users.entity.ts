@@ -57,6 +57,9 @@ export class Users {
   })
   role: Role;
 
+  @Column({ name: 'is_two_factor_enabled', default: false })
+  isTwoFactorEnabled: boolean;
+
   @OneToMany(() => ServerMember, (sm) => sm.members)
   serverMemberships: ServerMember[];
 

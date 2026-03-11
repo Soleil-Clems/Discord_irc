@@ -6,7 +6,7 @@ up:
 
 down:
 		@echo "=== Arret du conteneur... ==="
-		docker compose -f .docker/compose.yml down -v && clear
+		docker compose -f .docker/compose.yml down && clear
 
 build:
 			@echo "=== Construction de l'image... ==="
