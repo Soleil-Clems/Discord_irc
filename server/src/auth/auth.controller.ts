@@ -98,6 +98,7 @@ export class AuthController {
     if (!sent) {
       return { message: 'Un code a déjà été envoyé récemment' };
     }
+
     return { message: 'Code envoyé' };
   }
 

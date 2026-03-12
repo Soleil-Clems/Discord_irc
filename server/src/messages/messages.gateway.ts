@@ -106,6 +106,7 @@ export class MessagesGateway
     @MessageBody()
     data: CreateReactionDto,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const reactionMessage = await this.messagesService.reaction(
       data.messageId,
       data.emoji,
@@ -113,6 +114,7 @@ export class MessagesGateway
     );
     const roomName = `channel_${data.channelId}`;
     this.server.to(roomName).emit('reactionAdded', reactionMessage);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return reactionMessage;
   }
 
