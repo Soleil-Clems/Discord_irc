@@ -98,6 +98,7 @@ export class AuthController {
     if (!sent) {
       return { message: 'Un code a déjà été envoyé récemment' };
     }
+
     return { message: 'Code envoyé' };
   }
 
@@ -150,6 +151,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.userService.findOne(req.user.id);
   }
 }
