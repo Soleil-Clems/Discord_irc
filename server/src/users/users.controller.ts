@@ -13,6 +13,7 @@ import {
   UploadedFile,
   ParseFilePipe,
   MaxFileSizeValidator,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -62,6 +63,11 @@ export class UsersController {
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
+  }
+
+  @Get('search')
+  search(@Query('q') q: string) {
+    return this.usersService.search(q ?? '');
   }
 
   @Get(':email')
