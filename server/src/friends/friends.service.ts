@@ -3,7 +3,6 @@ import {
   NotFoundException,
   ConflictException,
   ForbiddenException,
-  InternalServerErrorException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +13,16 @@ import { Users } from '@/users/entities/users.entity';
 
 @Injectable()
 export class FriendsService {
+  private readonly safeUserSelect = {
+    id: true,
+    username: true,
+    firstname: true,
+    lastname: true,
+    img: true,
+    isActive: true,
+    lastSeen: true,
+  };
+
   constructor(
     @InjectRepository(FriendRequest)
     private friendRequestRepository: Repository<FriendRequest>,
@@ -87,22 +96,7 @@ export class FriendsService {
     if (!request) throw new NotFoundException('Demande non trouvée');
     if (request.receiver.id !== userId) throw new ForbiddenException('Action non autorisée');
 
-    const senderId = request.sender.id;
-
     await this.friendRequestRepository.remove(request);
-
-    // Bloquer l'expéditeur
-    const alreadyBlocked = await this.blockedUserRepository.findOne({
-      where: { blocker: { id: userId }, blocked: { id: senderId } },
-    });
-
-    if (!alreadyBlocked) {
-      const block = this.blockedUserRepository.create({
-        blocker: { id: userId },
-        blocked: { id: senderId },
-      });
-      await this.blockedUserRepository.save(block);
-    }
 
     return { message: 'Demande refusée' };
   }
@@ -121,13 +115,19 @@ export class FriendsService {
     return { message: 'Ami supprimé' };
   }
 
-  async getFriends(userId: number): Promise<Users[]> {
+  async getFriends(userId: number): Promise<Partial<Users>[]> {
     const requests = await this.friendRequestRepository.find({
       where: [
         { sender: { id: userId }, status: FriendRequestStatus.Accepted },
         { receiver: { id: userId }, status: FriendRequestStatus.Accepted },
       ],
       relations: ['sender', 'receiver'],
+      select: {
+        id: true,
+        status: true,
+        sender: this.safeUserSelect,
+        receiver: this.safeUserSelect,
+      },
     });
 
     return requests.map((r) =>
@@ -139,6 +139,12 @@ export class FriendsService {
     return this.friendRequestRepository.find({
       where: { receiver: { id: userId }, status: FriendRequestStatus.Pending },
       relations: ['sender'],
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        sender: this.safeUserSelect,
+      },
     });
   }
 
@@ -146,6 +152,12 @@ export class FriendsService {
     return this.friendRequestRepository.find({
       where: { sender: { id: userId }, status: FriendRequestStatus.Pending },
       relations: ['receiver'],
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        receiver: this.safeUserSelect,
+      },
     });
   }
 
@@ -188,10 +200,14 @@ export class FriendsService {
     return { message: 'Utilisateur débloqué' };
   }
 
-  async getBlockedUsers(userId: number): Promise<Users[]> {
+  async getBlockedUsers(userId: number): Promise<Partial<Users>[]> {
     const blocks = await this.blockedUserRepository.find({
       where: { blocker: { id: userId } },
       relations: ['blocked'],
+      select: {
+        id: true,
+        blocked: this.safeUserSelect,
+      },
     });
 
     return blocks.map((b) => b.blocked);

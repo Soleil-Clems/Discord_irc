@@ -130,8 +130,9 @@ export class UsersService {
 
   async search(query: string): Promise<Users[]> {
     try {
+      const sanitized = query.replace(/[%_]/g, '\\$&');
       return await this.userRepository.find({
-        where: { username: ILike(`%${query}%`) },
+        where: { username: ILike(`%${sanitized}%`) },
         select: {
           id: true,
           username: true,

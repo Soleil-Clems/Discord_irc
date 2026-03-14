@@ -38,7 +38,7 @@ export class FriendsController {
     return this.friendsService.acceptRequest(id, req.user.id);
   }
 
-  // Refuser une demande (et bloquer l'expéditeur)
+  // Refuser une demande
   @Patch('request/:id/decline')
   declineRequest(
     @Request() req,
