@@ -10,10 +10,12 @@ import { JwtStrategy } from './jwt.strategy';
 import { Users } from '@/users/entities/users.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { OtpModule } from '@/otp/otp.module';
 
 @Module({
   imports: [
     UsersModule,
+    OtpModule,
     TypeOrmModule.forFeature([Users, RefreshToken]),
     PassportModule,
     JwtModule.register({

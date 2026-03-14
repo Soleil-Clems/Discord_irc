@@ -8,6 +8,7 @@ import {
   Get,
   Body,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { LocalAuthGuard } from './guards/local.auth.guard';
@@ -17,13 +18,35 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { LogoutDto } from './dto/logout.dto';
 import { jwtConstants } from './constant';
 import { UsersService } from '@/users/users.service';
+import { OtpService } from '@/otp/otp.service';
+import { VerifyOtpDto } from '@/otp/dto/verify-otp.dto';
+import { ResendOtpDto } from '@/otp/dto/resend-otp.dto';
+import { TokenResponseDto } from './dto/token-response.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
     private userService: UsersService,
+    private otpService: OtpService,
   ) {}
+
+  private setRefreshTokenCookie(res: Response, token: string) {
+    res.cookie('refresh_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: jwtConstants.refreshTokenExpiresInMs,
+    });
+  }
+
+  private buildTokenResponse(tokens: TokenResponseDto) {
+    return {
+      access_token: tokens.access_token,
+      expires_in: tokens.expires_in,
+      user: tokens.user,
+    };
+  }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -32,20 +55,51 @@ export class AuthController {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const user: UserDto = req.user;
 
+    if (user.isTwoFactorEnabled) {
+      await this.otpService.generateOtp(user.id, user.email);
+      return {
+        requiresTwoFactor: true,
+        userId: user.id,
+      };
+    }
+
     const tokens = await this.authService.login(user);
+    this.setRefreshTokenCookie(res, tokens.refresh_token);
+    return this.buildTokenResponse(tokens);
+  }
 
-    res.cookie('refresh_token', tokens.refresh_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: jwtConstants.refreshTokenExpiresInMs,
-    });
+  @Post('verify-otp')
+  @HttpCode(HttpStatus.OK)
+  async verifyOtp(
+    @Body() verifyOtpDto: VerifyOtpDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const isValid = await this.otpService.verifyOtp(
+      verifyOtpDto.userId,
+      verifyOtpDto.code,
+    );
 
-    return {
-      access_token: tokens.access_token,
-      expires_in: tokens.expires_in,
-      user: tokens.user,
-    };
+    if (!isValid) {
+      throw new UnauthorizedException('Code invalide ou expiré');
+    }
+
+    const user = await this.userService.findOne(verifyOtpDto.userId);
+    const tokens = await this.authService.login(user as UserDto);
+
+    this.setRefreshTokenCookie(res, tokens.refresh_token);
+    return this.buildTokenResponse(tokens);
+  }
+
+  @Post('resend-otp')
+  @HttpCode(HttpStatus.OK)
+  async resendOtp(@Body() resendOtpDto: ResendOtpDto) {
+    const user = await this.userService.findOne(resendOtpDto.userId);
+    const sent = await this.otpService.generateOtp(user.id, user.email);
+    if (!sent) {
+      return { message: 'Un code a déjà été envoyé récemment' };
+    }
+
+    return { message: 'Code envoyé' };
   }
 
   @Post('refresh')
@@ -59,12 +113,7 @@ export class AuthController {
     }
 
     const tokens = await this.authService.refreshTokens(refreshToken);
-
-    return {
-      access_token: tokens.access_token,
-      expires_in: tokens.expires_in,
-      user: tokens.user,
-    };
+    return this.buildTokenResponse(tokens);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -102,6 +151,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.userService.findOne(req.user.id);
   }
 }

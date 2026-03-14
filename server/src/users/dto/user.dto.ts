@@ -46,4 +46,8 @@ export class UserDto {
 
   @IsEnum(Role)
   role: Role;
+
+  @IsOptional()
+  @IsBoolean()
+  isTwoFactorEnabled?: boolean;
 }
