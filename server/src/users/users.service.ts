@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Users } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -124,6 +124,29 @@ export class UsersService {
 
       throw new InternalServerErrorException(
         "Une erreur est survenue lors de la mise à jour de l'utilisateur",
+      );
+    }
+  }
+
+  async search(query: string): Promise<Users[]> {
+    try {
+      const sanitized = query.replace(/[%_]/g, '\\$&');
+      return await this.userRepository.find({
+        where: { username: ILike(`%${sanitized}%`) },
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          img: true,
+          isActive: true,
+          lastSeen: true,
+        },
+        take: 20,
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Une erreur est survenue lors de la recherche',
       );
     }
   }

@@ -7,6 +7,7 @@ import { ChannelsModule } from './channels/channels.module';
 import { MessagesModule } from './messages/messages.module';
 import { ConversationsModule } from './conversations/conversations.module';
 import { DmsModule } from './dms/dms.module';
+import { FriendsModule } from './friends/friends.module';
 import { ConfigModule } from '@nestjs/config';
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ConfigModule } from '@nestjs/config';
     MessagesModule,
     ConversationsModule,
     DmsModule,
+    FriendsModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
