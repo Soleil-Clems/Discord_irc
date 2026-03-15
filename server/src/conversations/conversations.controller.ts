@@ -33,8 +33,16 @@ export class ConversationsController {
   }
 
   @Get()
-  findAll(@Request() req) {
-    return this.conversationsService.findAll(req.user.id);
+  findAll(
+    @Request() req,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.conversationsService.findAll(
+      req.user.id,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @Get(':id')
