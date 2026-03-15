@@ -49,7 +49,7 @@ export class MessagesGateway
   }
 
   @SubscribeMessage('joinChannel')
-  async findAll(
+  async joinChannel(
     @WsUser() user: any,
     @ConnectedSocket() client: Socket,
     @MessageBody() channelId: number,
@@ -57,11 +57,10 @@ export class MessagesGateway
     const roomName = `channel_${channelId}`;
 
     client.rooms.forEach((room) => {
-      if (room !== client.id) client.leave(room);
+      if (room.startsWith('channel_')) client.leave(room);
     });
 
     await client.join(roomName);
-    return this.messagesService.findAll(channelId);
   }
 
   @SubscribeMessage('typing')

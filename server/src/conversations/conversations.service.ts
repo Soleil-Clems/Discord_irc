@@ -82,6 +82,9 @@ export class ConversationsService {
   }
 
   async findAll(userId: number, page: number = 1, limit: number = 20) {
+    page = Math.max(1, page);
+    limit = Math.min(Math.max(1, limit), 100);
+
     const [conversations, total] = await this.conversationRepository
       .createQueryBuilder('conversation')
       .leftJoinAndSelect('conversation.user1', 'user1')
@@ -125,6 +128,9 @@ export class ConversationsService {
     page: number = 1,
     limit: number = 50,
   ) {
+    page = Math.max(1, page);
+    limit = Math.min(Math.max(1, limit), 100);
+
     const conversation = await this.findOne(conversationId, userId);
 
     const [messages, total] = await this.privateMessageRepository.findAndCount({

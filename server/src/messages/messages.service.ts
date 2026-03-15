@@ -111,12 +111,25 @@ export class MessagesService {
     return this.messageRepository.save(message);
   }
 
-  async findAll(channelId: number) {
-    return this.messageRepository.find({
+  async findAll(channelId: number, page: number = 1, limit: number = 50) {
+    page = Math.max(1, page);
+    limit = Math.min(Math.max(1, limit), 100);
+
+    const [messages, total] = await this.messageRepository.findAndCount({
       where: { channel: { id: channelId } },
       relations: { author: true, reactions: { author: true } },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return {
+      messages: messages.reverse(),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async update(
