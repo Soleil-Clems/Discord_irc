@@ -1,12 +1,14 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -31,8 +33,12 @@ export class MessagesController {
   }
 
   @Get('channel/:id')
-  findAll(@Param('id', ParseIntPipe) channelId: number) {
-    return this.messagesService.findAll(channelId);
+  findAll(
+    @Param('id', ParseIntPipe) channelId: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ) {
+    return this.messagesService.findAll(channelId, page, limit);
   }
 
   @Patch(':id')

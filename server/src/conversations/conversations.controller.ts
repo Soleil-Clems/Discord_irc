@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -33,8 +34,12 @@ export class ConversationsController {
   }
 
   @Get()
-  findAll(@Request() req) {
-    return this.conversationsService.findAll(req.user.id);
+  findAll(
+    @Request() req,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ) {
+    return this.conversationsService.findAll(req.user.id, page, limit);
   }
 
   @Get(':id')
@@ -46,15 +51,10 @@ export class ConversationsController {
   findMessages(
     @Request() req,
     @Param('id', ParseIntPipe) id: number,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
   ) {
-    return this.conversationsService.findMessages(
-      id,
-      req.user.id,
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 50,
-    );
+    return this.conversationsService.findMessages(id, req.user.id, page, limit);
   }
 
   @Post(':id/messages')

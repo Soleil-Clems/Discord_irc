@@ -81,17 +81,28 @@ export class ConversationsService {
     return conversation;
   }
 
-  async findAll(userId: number) {
-    const conversations = await this.conversationRepository
+  async findAll(userId: number, page: number = 1, limit: number = 20) {
+    page = Math.max(1, page);
+    limit = Math.min(Math.max(1, limit), 100);
+
+    const [conversations, total] = await this.conversationRepository
       .createQueryBuilder('conversation')
       .leftJoinAndSelect('conversation.user1', 'user1')
       .leftJoinAndSelect('conversation.user2', 'user2')
       .where('user1.id = :userId', { userId })
       .orWhere('user2.id = :userId', { userId })
       .orderBy('conversation.updatedAt', 'DESC')
-      .getMany();
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
-    return conversations;
+    return {
+      conversations,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(conversationId: number, userId: number) {
@@ -117,6 +128,9 @@ export class ConversationsService {
     page: number = 1,
     limit: number = 50,
   ) {
+    page = Math.max(1, page);
+    limit = Math.min(Math.max(1, limit), 100);
+
     const conversation = await this.findOne(conversationId, userId);
 
     const [messages, total] = await this.privateMessageRepository.findAndCount({
