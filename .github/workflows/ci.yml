@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - uses: actions/cache/save@v4
+        with:
+          path: server/node_modules
+          key: node-modules-back-${{ hashFiles('server/package-lock.json') }}
+
+  lint:
+    needs: install
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache/restore@v4
+        with:
+          path: server/node_modules
+          key: node-modules-back-${{ hashFiles('server/package-lock.json') }}
+      - run: npx eslint "{src,apps,libs,test}/**/*.ts"
+
+  format:
+    needs: install
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache/restore@v4
+        with:
+          path: server/node_modules
+          key: node-modules-back-${{ hashFiles('server/package-lock.json') }}
+      - run: npx prettier --check "src/**/*.ts"
+
+  typecheck:
+    needs: install
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache/restore@v4
+        with:
+          path: server/node_modules
+          key: node-modules-back-${{ hashFiles('server/package-lock.json') }}
+      - run: npx tsc --noEmit
+
+  build:
+    needs: [lint, format, typecheck]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache/restore@v4
+        with:
+          path: server/node_modules
+          key: node-modules-back-${{ hashFiles('server/package-lock.json') }}
+      - run: npx nest build
+
+  audit:
+    needs: install
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache/restore@v4
+        with:
+          path: server/node_modules
+          key: node-modules-back-${{ hashFiles('server/package-lock.json') }}
+      - run: npm audit --audit-level=high
