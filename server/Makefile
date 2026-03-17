@@ -1,4 +1,4 @@
-.PHONY: help build start stop
+.PHONY: help build start stop test test-back test-front
 
 up:
 			@echo "=== Demarrage du conteneur... ==="
@@ -31,9 +31,23 @@ stop: down stopall
 
 prune:
 			docker system prune -a
+test-back:
+	@echo "=== Tests unitaires Backend ==="
+	@npm run test:cov
+
+test-front:
+	@echo "=== Tests unitaires Frontend ==="
+	@cd ../../lezom_front/client && npm run test:coverage
+
+test: test-back test-front
+	@echo "=== Tous les tests sont passés ==="
+
 help:
 	@echo "Utilisation :"
-	@echo "  make build    - Construit l'image"
-	@echo "  make start    - Démarre les services"
-	@echo "  make stop     - Arrête les services"
-	@echo "  make help     - Affiche ce message"
+	@echo "  make build       - Construit l'image Docker"
+	@echo "  make up          - Démarre les services"
+	@echo "  make stop        - Arrête les services"
+	@echo "  make test        - Lance tous les tests (back + front)"
+	@echo "  make test-back   - Tests backend uniquement"
+	@echo "  make test-front  - Tests frontend uniquement"
+	@echo "  make help        - Affiche ce message"
