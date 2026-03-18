@@ -1,6 +1,6 @@
 
 services:
-  server:
+  lezom-server:
     container_name: ${COMPOSE_PROJECT_NAME}-server
     build: 
       context: ..
@@ -16,11 +16,6 @@ services:
     depends_on:
       mysql:
         condition: service_healthy  
-      mailhog:          
-        condition: service_started
-    volumes:
-      - ..:/app                        
-      - /app/node_modules 
 
   mysql:
     container_name: ${COMPOSE_PROJECT_NAME}-mysql
@@ -49,16 +44,6 @@ services:
       PMA_PORT: 3306
     depends_on:
       - mysql
-  
-  mailhog:
-    container_name: ${COMPOSE_PROJECT_NAME}-mailhog
-    image: mailhog/mailhog:latest
-    restart: always
-    expose:
-      - 1025
-    ports:
-      - 8025:8025
-      - 1025:1025
 
 volumes:
   lezom-mysql-data:
