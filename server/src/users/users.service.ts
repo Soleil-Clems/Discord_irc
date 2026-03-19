@@ -145,6 +145,7 @@ export class UsersService {
         },
         take: 20,
       });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new InternalServerErrorException(
         'Une erreur est survenue lors de la recherche',
@@ -180,7 +181,7 @@ export class UsersService {
       }
 
       throw new InternalServerErrorException(
-        "Une erreur est survenue lors de la recuperation du profil utilisateur",
+        'Une erreur est survenue lors de la recuperation du profil utilisateur',
       );
     }
   }

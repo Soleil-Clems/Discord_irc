@@ -26,6 +26,7 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
     volumes:
       - lezom-mysql-data:/var/lib/mysql
+      - ./lezom.sql:/docker-entrypoint-initdb.d/lezom.sql
     ports:
       - "3306:3306"
     healthcheck:  
