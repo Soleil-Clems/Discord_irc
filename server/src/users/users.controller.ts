@@ -27,6 +27,7 @@ import { Role } from './enums/roles.enum';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DmsService, FileCategory } from '@/dms/dms.service';
 import { MimeTypeValidator } from '@/common/validators/mime-type.validator';
+import { UserProfileDto } from './dto/user-profile.dto';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -70,7 +71,7 @@ export class UsersController {
     return this.usersService.search(q ?? '');
   }
 
-  @Get(':email')
+  @Get('email/:email')
   findByEmail(
     @Param()
     params: EmailParamDto,
@@ -153,5 +154,16 @@ export class UsersController {
     };
 
     return await this.usersService.update(id, updateDto);
+  }
+
+  @Get(':id/profile')
+  async getPublicProfile(
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    id: number,
+  ): Promise<UserProfileDto> {
+    return this.usersService.getPublicProfile(id);
   }
 }

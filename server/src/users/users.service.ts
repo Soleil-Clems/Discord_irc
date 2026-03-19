@@ -9,6 +9,7 @@ import { ILike, Repository } from 'typeorm';
 import { Users } from './entities/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserProfileDto } from './dto/user-profile.dto';
 import * as bcrypt from 'bcrypt';
 
 const saltOrRounds = parseInt(process.env.SALT || '10', 10);
@@ -147,6 +148,39 @@ export class UsersService {
     } catch (error) {
       throw new InternalServerErrorException(
         'Une erreur est survenue lors de la recherche',
+      );
+    }
+  }
+
+  async getPublicProfile(id: number): Promise<UserProfileDto> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+        select: {
+          id: true,
+          username: true,
+          firstname: true,
+          lastname: true,
+          description: true,
+          img: true,
+          isActive: true,
+          lastSeen: true,
+          createdAt: true,
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException('Utilisateur non trouve');
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        "Une erreur est survenue lors de la recuperation du profil utilisateur",
       );
     }
   }
