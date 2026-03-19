@@ -1,12 +1,12 @@
-
 services:
   server:
     container_name: ${COMPOSE_PROJECT_NAME}-server
-    build: 
+    build:
       context: ..
       dockerfile: .docker/Dockerfile
+    restart: always
     ports:
-      - "8080:8080"
+      - '8080:8080'
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -15,12 +15,12 @@ services:
       DB_NAME: ${DB_NAME}
     depends_on:
       mysql:
-        condition: service_healthy  
-      mailhog:          
+        condition: service_healthy
+      mailpit:
         condition: service_started
     volumes:
-      - ..:/app                        
-      - /app/node_modules 
+      - ..:/app
+      - /app/node_modules
 
   mysql:
     container_name: ${COMPOSE_PROJECT_NAME}-mysql
@@ -32,9 +32,9 @@ services:
     volumes:
       - lezom-mysql-data:/var/lib/mysql
     ports:
-      - "3306:3306"
-    healthcheck:  
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      - '3306:3306'
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       timeout: 20s
       retries: 10
 
@@ -43,16 +43,16 @@ services:
     image: phpmyadmin:latest
     restart: always
     ports:
-      - "8083:80"
+      - '8083:80'
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
     depends_on:
       - mysql
-  
-  mailhog:
-    container_name: ${COMPOSE_PROJECT_NAME}-mailhog
-    image: mailhog/mailhog:latest
+
+  mailpit:
+    container_name: ${COMPOSE_PROJECT_NAME}-mailpit
+    image: axllent/mailpit:latest
     restart: always
     expose:
       - 1025
