@@ -1,5 +1,4 @@
-import { Users } from 'src/users/entities/users.entity';
-import {
+import { Users } from 'src/users/entities/users.entity';import {
   Column,
   CreateDateColumn,
   Entity,
@@ -29,4 +28,7 @@ export class ServerBan {
 
   @CreateDateColumn()
   bannedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  expiresAt: Date | null;
 }
