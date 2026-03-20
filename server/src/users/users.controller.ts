@@ -156,6 +156,44 @@ export class UsersController {
     return await this.usersService.update(id, updateDto);
   }
 
+  @UseInterceptors(FileInterceptor('file'))
+  @Patch('banner/:id')
+  async updateBanner(
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    id: number,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MimeTypeValidator({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            mimeTypes: ALLOWED_MIME_TYPES.img as any,
+          }),
+          new MaxFileSizeValidator({
+            maxSize: MAX_FILE_SIZE,
+            message: 'Image is too large. Max file size is 10MB',
+          }),
+        ],
+        fileIsRequired: true,
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const uploadResult = await this.dmsService.uploadSingleFile({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      file,
+      category: FileCategory.Image,
+    });
+
+    const updateDto: UpdateUserDto = {
+      banner: uploadResult.url,
+    };
+
+    return await this.usersService.update(id, updateDto);
+  }
+
   @Get(':id/profile')
   async getPublicProfile(
     @Param(
