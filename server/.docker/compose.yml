@@ -2,7 +2,7 @@
 services:
   lezom-server:
     container_name: ${COMPOSE_PROJECT_NAME}-server
-    build: 
+    build:
       context: ..
       dockerfile: .docker/Dockerfile
     ports:
@@ -15,7 +15,9 @@ services:
       DB_NAME: ${DB_NAME}
     depends_on:
       mysql:
-        condition: service_healthy  
+        condition: service_healthy
+      mailpit:
+        condition: service_started
 
   mysql:
     container_name: ${COMPOSE_PROJECT_NAME}-mysql
@@ -45,6 +47,14 @@ services:
       PMA_PORT: 3306
     depends_on:
       - mysql
+
+  mailpit:
+    container_name: ${COMPOSE_PROJECT_NAME}-mailpit
+    image: axllent/mailpit:latest
+    restart: always
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
 volumes:
   lezom-mysql-data:
