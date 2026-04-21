@@ -7,6 +7,6 @@ export class CreateReactionDto {
   @IsNumber()
   channelId: number;
 
-@IsNumber()
- messageId: number;
- }
+  @IsNumber()
+  messageId: number;
+}

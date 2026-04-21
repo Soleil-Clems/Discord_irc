@@ -143,7 +143,6 @@ export class UsersController {
   ) {
     // Upload du fichier
     const uploadResult = await this.dmsService.uploadSingleFile({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       file,
       category: FileCategory.Image,
     });

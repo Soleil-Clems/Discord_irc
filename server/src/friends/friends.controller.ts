@@ -22,7 +22,10 @@ export class FriendsController {
   @Post('request/:userId')
   sendRequest(
     @Request() req,
-    @Param('userId', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))
+    @Param(
+      'userId',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
     userId: number,
   ) {
     return this.friendsService.sendRequest(req.user.id, userId);
@@ -32,7 +35,10 @@ export class FriendsController {
   @Patch('request/:id/accept')
   acceptRequest(
     @Request() req,
-    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
     id: number,
   ) {
     return this.friendsService.acceptRequest(id, req.user.id);
@@ -42,7 +48,10 @@ export class FriendsController {
   @Patch('request/:id/decline')
   declineRequest(
     @Request() req,
-    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
     id: number,
   ) {
     return this.friendsService.declineRequest(id, req.user.id);
@@ -70,7 +79,10 @@ export class FriendsController {
   @Delete(':userId')
   removeFriend(
     @Request() req,
-    @Param('userId', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))
+    @Param(
+      'userId',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
     userId: number,
   ) {
     return this.friendsService.removeFriend(req.user.id, userId);
@@ -80,7 +92,10 @@ export class FriendsController {
   @Post('block/:userId')
   blockUser(
     @Request() req,
-    @Param('userId', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))
+    @Param(
+      'userId',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
     userId: number,
   ) {
     return this.friendsService.blockUser(req.user.id, userId);
@@ -90,7 +105,10 @@ export class FriendsController {
   @Delete('block/:userId')
   unblockUser(
     @Request() req,
-    @Param('userId', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))
+    @Param(
+      'userId',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
     userId: number,
   ) {
     return this.friendsService.unblockUser(req.user.id, userId);
