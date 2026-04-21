@@ -18,7 +18,6 @@ import { ChannelType } from '@/channels/enums/channel-type.enum';
 import { MessageType } from './enums/message-type.enum';
 import { Reaction } from './entities/reaction.entity';
 
-
 @Injectable()
 export class MessagesService {
   constructor(
@@ -102,7 +101,7 @@ export class MessagesService {
 
     const message = this.messageRepository.create({
       content,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       type: MessageType.System,
       author: user,
       channel: channel,

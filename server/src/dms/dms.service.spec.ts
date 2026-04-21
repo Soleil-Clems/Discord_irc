@@ -71,7 +71,10 @@ describe('DmsService', () => {
         size: 4,
       } as Express.Multer.File;
 
-      const result = await freshService.uploadSingleFile({ file, category: FileCategory.Image });
+      const result = await freshService.uploadSingleFile({
+        file,
+        category: FileCategory.Image,
+      });
       expect(result).toHaveProperty('url');
       expect(result).toHaveProperty('key');
     });
@@ -94,8 +97,12 @@ describe('DmsService', () => {
     });
 
     it('lève InternalServerErrorException si erreur', async () => {
-      (service as any).client = { send: jest.fn().mockRejectedValue(new Error('S3 error')) };
-      await expect(service.deleteFile('bad-key')).rejects.toThrow(InternalServerErrorException);
+      (service as any).client = {
+        send: jest.fn().mockRejectedValue(new Error('S3 error')),
+      };
+      await expect(service.deleteFile('bad-key')).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 });

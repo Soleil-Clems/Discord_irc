@@ -7,7 +7,10 @@ import {
 } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { FriendsService } from './friends.service';
-import { FriendRequest, FriendRequestStatus } from './entities/friend-request.entity';
+import {
+  FriendRequest,
+  FriendRequestStatus,
+} from './entities/friend-request.entity';
 import { BlockedUser } from './entities/blocked-user.entity';
 import { Users } from '../users/entities/users.entity';
 
@@ -45,32 +48,46 @@ describe('FriendsService', () => {
 
   describe('sendRequest', () => {
     it('lève BadRequestException si senderId === receiverId', async () => {
-      await expect(service.sendRequest(1, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.sendRequest(1, 1)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('lève NotFoundException si receiver non trouvé', async () => {
       usersRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.sendRequest(1, 2)).rejects.toThrow(NotFoundException);
+      await expect(service.sendRequest(1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lève ForbiddenException si un blocage existe', async () => {
       usersRepo.findOne.mockResolvedValue({ id: 2 });
       blockedUserRepo.findOne.mockResolvedValue({ id: 1 });
-      await expect(service.sendRequest(1, 2)).rejects.toThrow(ForbiddenException);
+      await expect(service.sendRequest(1, 2)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève ConflictException si déjà amis', async () => {
       usersRepo.findOne.mockResolvedValue({ id: 2 });
       blockedUserRepo.findOne.mockResolvedValue(undefined);
-      friendRequestRepo.findOne.mockResolvedValue({ status: FriendRequestStatus.Accepted });
-      await expect(service.sendRequest(1, 2)).rejects.toThrow(ConflictException);
+      friendRequestRepo.findOne.mockResolvedValue({
+        status: FriendRequestStatus.Accepted,
+      });
+      await expect(service.sendRequest(1, 2)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('lève ConflictException si demande déjà en cours', async () => {
       usersRepo.findOne.mockResolvedValue({ id: 2 });
       blockedUserRepo.findOne.mockResolvedValue(undefined);
-      friendRequestRepo.findOne.mockResolvedValue({ status: FriendRequestStatus.Pending });
-      await expect(service.sendRequest(1, 2)).rejects.toThrow(ConflictException);
+      friendRequestRepo.findOne.mockResolvedValue({
+        status: FriendRequestStatus.Pending,
+      });
+      await expect(service.sendRequest(1, 2)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('crée et retourne la demande si tout est valide', async () => {
@@ -89,23 +106,44 @@ describe('FriendsService', () => {
   describe('acceptRequest', () => {
     it('lève NotFoundException si demande non trouvée', async () => {
       friendRequestRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.acceptRequest(1, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.acceptRequest(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("lève ForbiddenException si l'utilisateur n'est pas le receiver", async () => {
-      friendRequestRepo.findOne.mockResolvedValue({ id: 1, receiver: { id: 2 }, status: FriendRequestStatus.Pending });
-      await expect(service.acceptRequest(1, 1)).rejects.toThrow(ForbiddenException);
+      friendRequestRepo.findOne.mockResolvedValue({
+        id: 1,
+        receiver: { id: 2 },
+        status: FriendRequestStatus.Pending,
+      });
+      await expect(service.acceptRequest(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève ConflictException si demande déjà traitée', async () => {
-      friendRequestRepo.findOne.mockResolvedValue({ id: 1, receiver: { id: 1 }, status: FriendRequestStatus.Accepted });
-      await expect(service.acceptRequest(1, 1)).rejects.toThrow(ConflictException);
+      friendRequestRepo.findOne.mockResolvedValue({
+        id: 1,
+        receiver: { id: 1 },
+        status: FriendRequestStatus.Accepted,
+      });
+      await expect(service.acceptRequest(1, 1)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('accepte la demande et retourne la requête mise à jour', async () => {
-      const request = { id: 1, receiver: { id: 1 }, status: FriendRequestStatus.Pending };
+      const request = {
+        id: 1,
+        receiver: { id: 1 },
+        status: FriendRequestStatus.Pending,
+      };
       friendRequestRepo.findOne.mockResolvedValue(request);
-      friendRequestRepo.save.mockResolvedValue({ ...request, status: FriendRequestStatus.Accepted });
+      friendRequestRepo.save.mockResolvedValue({
+        ...request,
+        status: FriendRequestStatus.Accepted,
+      });
 
       const result = await service.acceptRequest(1, 1);
       expect(result.status).toBe(FriendRequestStatus.Accepted);
@@ -115,42 +153,39 @@ describe('FriendsService', () => {
   describe('declineRequest', () => {
     it('lève NotFoundException si demande non trouvée', async () => {
       friendRequestRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.declineRequest(1, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.declineRequest(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("lève ForbiddenException si l'utilisateur n'est pas le receiver", async () => {
-      friendRequestRepo.findOne.mockResolvedValue({ id: 1, receiver: { id: 2 }, sender: { id: 3 } });
-      await expect(service.declineRequest(1, 1)).rejects.toThrow(ForbiddenException);
+      friendRequestRepo.findOne.mockResolvedValue({
+        id: 1,
+        receiver: { id: 2 },
+        sender: { id: 3 },
+      });
+      await expect(service.declineRequest(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
-    it('refuse, bloque et retourne message', async () => {
+    it('refuse et retourne message', async () => {
       const request = { id: 1, receiver: { id: 1 }, sender: { id: 2 } };
       friendRequestRepo.findOne.mockResolvedValue(request);
       friendRequestRepo.remove.mockResolvedValue(request);
-      blockedUserRepo.findOne.mockResolvedValue(undefined);
-      blockedUserRepo.create.mockReturnValue({});
-      blockedUserRepo.save.mockResolvedValue({});
 
       const result = await service.declineRequest(1, 1);
       expect(result.message).toBe('Demande refusée');
-      expect(blockedUserRepo.save).toHaveBeenCalled();
-    });
-
-    it("ne recrée pas le blocage s'il existe déjà", async () => {
-      const request = { id: 1, receiver: { id: 1 }, sender: { id: 2 } };
-      friendRequestRepo.findOne.mockResolvedValue(request);
-      friendRequestRepo.remove.mockResolvedValue(request);
-      blockedUserRepo.findOne.mockResolvedValue({ id: 1 });
-
-      await service.declineRequest(1, 1);
-      expect(blockedUserRepo.save).not.toHaveBeenCalled();
+      expect(friendRequestRepo.remove).toHaveBeenCalledWith(request);
     });
   });
 
   describe('removeFriend', () => {
     it('lève NotFoundException si amitié non trouvée', async () => {
       friendRequestRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.removeFriend(1, 2)).rejects.toThrow(NotFoundException);
+      await expect(service.removeFriend(1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('supprime et retourne le message', async () => {
@@ -168,8 +203,16 @@ describe('FriendsService', () => {
       const user1 = { id: 1, username: 'user1' };
       const user2 = { id: 2, username: 'user2' };
       friendRequestRepo.find.mockResolvedValue([
-        { sender: user1, receiver: user2, status: FriendRequestStatus.Accepted },
-        { sender: user2, receiver: user1, status: FriendRequestStatus.Accepted },
+        {
+          sender: user1,
+          receiver: user2,
+          status: FriendRequestStatus.Accepted,
+        },
+        {
+          sender: user2,
+          receiver: user1,
+          status: FriendRequestStatus.Accepted,
+        },
       ]);
 
       const result = await service.getFriends(1);
@@ -198,7 +241,9 @@ describe('FriendsService', () => {
 
   describe('blockUser', () => {
     it('lève BadRequestException si blockerId === blockedId', async () => {
-      await expect(service.blockUser(1, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.blockUser(1, 1)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('lève ConflictException si déjà bloqué', async () => {
@@ -234,7 +279,9 @@ describe('FriendsService', () => {
   describe('unblockUser', () => {
     it('lève NotFoundException si blocage non trouvé', async () => {
       blockedUserRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.unblockUser(1, 2)).rejects.toThrow(NotFoundException);
+      await expect(service.unblockUser(1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('débloque et retourne message', async () => {

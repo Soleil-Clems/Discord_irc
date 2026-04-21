@@ -29,8 +29,14 @@ describe('ChannelsController', () => {
   it('create délègue à channelsService.create', async () => {
     mockChannelsService.create.mockResolvedValue({ id: 1 });
     const req = { user: { id: 1 } };
-    await controller.create(req as any, { serverId: 1, name: 'general' } as any);
-    expect(mockChannelsService.create).toHaveBeenCalledWith({ serverId: 1, name: 'general' }, 1);
+    await controller.create(
+      req as any,
+      { serverId: 1, name: 'general' } as any,
+    );
+    expect(mockChannelsService.create).toHaveBeenCalledWith(
+      { serverId: 1, name: 'general' },
+      1,
+    );
   });
 
   it('findAll délègue à channelsService.findAll', async () => {
@@ -49,7 +55,11 @@ describe('ChannelsController', () => {
     mockChannelsService.update.mockResolvedValue({ id: 1 });
     const req = { user: { id: 1 } };
     await controller.update(req as any, 1, { name: 'new' } as any);
-    expect(mockChannelsService.update).toHaveBeenCalledWith(1, { name: 'new' }, 1);
+    expect(mockChannelsService.update).toHaveBeenCalledWith(
+      1,
+      { name: 'new' },
+      1,
+    );
   });
 
   it('remove délègue à channelsService.remove', async () => {

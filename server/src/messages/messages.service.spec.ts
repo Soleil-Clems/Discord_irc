@@ -14,6 +14,7 @@ import { MessageType } from './enums/message-type.enum';
 const mockRepo = () => ({
   findOne: jest.fn(),
   find: jest.fn(),
+  findAndCount: jest.fn(),
   findOneBy: jest.fn(),
   save: jest.fn(),
   create: jest.fn(),
@@ -55,25 +56,45 @@ describe('MessagesService', () => {
 
     it('lève NotFoundException si channel non trouvé', async () => {
       channelRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.create(dto as any, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.create(dto as any, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lève NotFoundException si channel est de type Call', async () => {
-      channelRepo.findOne.mockResolvedValue({ id: 1, type: ChannelType.Call, server: { id: 1 } });
-      await expect(service.create(dto as any, 1)).rejects.toThrow(NotFoundException);
+      channelRepo.findOne.mockResolvedValue({
+        id: 1,
+        type: ChannelType.Call,
+        server: { id: 1 },
+      });
+      await expect(service.create(dto as any, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lève ForbiddenException si user non membre', async () => {
-      channelRepo.findOne.mockResolvedValue({ id: 1, type: ChannelType.Text, server: { id: 1 } });
+      channelRepo.findOne.mockResolvedValue({
+        id: 1,
+        type: ChannelType.Text,
+        server: { id: 1 },
+      });
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.create(dto as any, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.create(dto as any, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève NotFoundException si user non trouvé', async () => {
-      channelRepo.findOne.mockResolvedValue({ id: 1, type: ChannelType.Text, server: { id: 1 } });
+      channelRepo.findOne.mockResolvedValue({
+        id: 1,
+        type: ChannelType.Text,
+        server: { id: 1 },
+      });
       memberRepo.findOne.mockResolvedValue({ id: 1 });
       userRepo.findOneBy.mockResolvedValue(undefined);
-      await expect(service.create(dto as any, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.create(dto as any, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('crée et retourne le message si tout est valide', async () => {
@@ -94,13 +115,17 @@ describe('MessagesService', () => {
   describe('createSystemMessage', () => {
     it('lève NotFoundException si channel non trouvé', async () => {
       channelRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.createSystemMessage(1, 'content', 1)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.createSystemMessage(1, 'content', 1),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('lève NotFoundException si user non trouvé', async () => {
       channelRepo.findOne.mockResolvedValue({ id: 1 });
       userRepo.findOneBy.mockResolvedValue(undefined);
-      await expect(service.createSystemMessage(1, 'content', 1)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.createSystemMessage(1, 'content', 1),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('crée un message de type System', async () => {
@@ -114,33 +139,50 @@ describe('MessagesService', () => {
 
       const result = await service.createSystemMessage(1, 'content', 1);
       expect(result).toEqual(msg);
-      expect(messageRepo.create).toHaveBeenCalledWith(expect.objectContaining({ type: MessageType.System }));
+      expect(messageRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ type: MessageType.System }),
+      );
     });
   });
 
   describe('findAll', () => {
-    it('retourne les messages du channel', async () => {
-      const messages = [{ id: 1 }, { id: 2 }];
-      messageRepo.find.mockResolvedValue(messages);
+    it('retourne les messages du channel paginés', async () => {
+      messageRepo.findAndCount.mockResolvedValue([[{ id: 1 }, { id: 2 }], 2]);
       const result = await service.findAll(1);
-      expect(result).toEqual(messages);
-      expect(messageRepo.find).toHaveBeenCalledWith(expect.objectContaining({ order: { createdAt: 'ASC' } }));
+      expect(result.messages).toEqual([{ id: 2 }, { id: 1 }]);
+      expect(result.total).toBe(2);
+      expect(messageRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({ order: { createdAt: 'DESC' } }),
+      );
     });
   });
 
   describe('update', () => {
     it('lève NotFoundException si message non trouvé', async () => {
       messageRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.update(1, { content: 'new' } as any, 1)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update(1, { content: 'new' } as any, 1),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it("lève ForbiddenException si l'auteur ne correspond pas", async () => {
-      messageRepo.findOne.mockResolvedValue({ id: 1, author: { id: 2 }, channel: { id: 1 } });
-      await expect(service.update(1, { content: 'new' } as any, 1)).rejects.toThrow(ForbiddenException);
+      messageRepo.findOne.mockResolvedValue({
+        id: 1,
+        author: { id: 2 },
+        channel: { id: 1 },
+      });
+      await expect(
+        service.update(1, { content: 'new' } as any, 1),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('met à jour le message si auteur valide', async () => {
-      const message = { id: 1, author: { id: 1 }, channel: { id: 1 }, content: 'old' };
+      const message = {
+        id: 1,
+        author: { id: 1 },
+        channel: { id: 1 },
+        content: 'old',
+      };
       const updated = { ...message, content: 'new' };
       messageRepo.findOne
         .mockResolvedValueOnce(message)
@@ -155,13 +197,17 @@ describe('MessagesService', () => {
   describe('reaction', () => {
     it('lève NotFoundException si message non trouvé', async () => {
       messageRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.reaction(1, '👍', 1)).rejects.toThrow(NotFoundException);
+      await expect(service.reaction(1, '👍', 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lève NotFoundException si user non trouvé', async () => {
       messageRepo.findOne.mockResolvedValueOnce({ id: 1 });
       userRepo.findOneBy.mockResolvedValue(undefined);
-      await expect(service.reaction(1, '👍', 1)).rejects.toThrow(NotFoundException);
+      await expect(service.reaction(1, '👍', 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('supprime la réaction existante (toggle off)', async () => {
@@ -200,7 +246,11 @@ describe('MessagesService', () => {
     });
 
     it("supprime si l'utilisateur est l'auteur", async () => {
-      const message = { id: 1, author: { id: 1 }, channel: { id: 5, server: { id: 2 } } };
+      const message = {
+        id: 1,
+        author: { id: 1 },
+        channel: { id: 5, server: { id: 2 } },
+      };
       messageRepo.findOne.mockResolvedValue(message);
       messageRepo.remove.mockResolvedValue(message);
 
@@ -209,7 +259,11 @@ describe('MessagesService', () => {
     });
 
     it('supprime si user est Admin du serveur', async () => {
-      const message = { id: 1, author: { id: 2 }, channel: { id: 5, server: { id: 2 } } };
+      const message = {
+        id: 1,
+        author: { id: 2 },
+        channel: { id: 5, server: { id: 2 } },
+      };
       messageRepo.findOne.mockResolvedValue(message);
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Admin });
       messageRepo.remove.mockResolvedValue(message);
@@ -219,7 +273,11 @@ describe('MessagesService', () => {
     });
 
     it('lève ForbiddenException si user est simple membre', async () => {
-      const message = { id: 1, author: { id: 2 }, channel: { id: 5, server: { id: 2 } } };
+      const message = {
+        id: 1,
+        author: { id: 2 },
+        channel: { id: 5, server: { id: 2 } },
+      };
       messageRepo.findOne.mockResolvedValue(message);
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Member });
 
@@ -227,7 +285,11 @@ describe('MessagesService', () => {
     });
 
     it('lève ForbiddenException si user non membre', async () => {
-      const message = { id: 1, author: { id: 2 }, channel: { id: 5, server: { id: 2 } } };
+      const message = {
+        id: 1,
+        author: { id: 2 },
+        channel: { id: 5, server: { id: 2 } },
+      };
       messageRepo.findOne.mockResolvedValue(message);
       memberRepo.findOne.mockResolvedValue(undefined);
 

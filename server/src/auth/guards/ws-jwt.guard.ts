@@ -25,7 +25,7 @@ export class WsJwtGuard implements CanActivate {
       });
 
       // Attache le user au client socket pour pouvoir le récupérer plus tard
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       client.data.user = payload as JwtPayload;
 
       return true;

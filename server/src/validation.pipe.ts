@@ -16,7 +16,7 @@ export class ValidationPipe implements PipeTransform<any> {
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const object = plainToInstance(metatype, value);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     const errors = await validate(object);
     if (errors.length > 0) {
       throw new BadRequestException('Validation failed');

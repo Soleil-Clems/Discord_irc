@@ -46,16 +46,18 @@ describe('MessagesGateway', () => {
       const emitMock = jest.fn();
       (gateway as any).server.to.mockReturnValue({ emit: emitMock });
 
-      await gateway.create({ id: 1 } as any, client as any, { channelId: 5, content: 'hi' } as any);
+      await gateway.create(
+        { id: 1 } as any,
+        client as any,
+        { channelId: 5, content: 'hi' } as any,
+      );
       expect(mockMessagesService.create).toHaveBeenCalled();
       expect(emitMock).toHaveBeenCalledWith('newMessage', msg);
     });
   });
 
-  describe('findAll (joinChannel)', () => {
-    it('rejoint la room et retourne les messages', async () => {
-      const msgs = [{ id: 1 }];
-      mockMessagesService.findAll.mockResolvedValue(msgs);
+  describe('joinChannel', () => {
+    it('rejoint la room du channel et quitte les autres', async () => {
       const rooms = new Set(['channel_99']);
       const client = {
         data: { user: { id: 1 } },
@@ -64,9 +66,9 @@ describe('MessagesGateway', () => {
         rooms,
       };
 
-      const result = await gateway.findAll({ id: 1 } as any, client as any, 5);
+      await gateway.joinChannel({ id: 1 } as any, client as any, 5);
+      expect(client.leave).toHaveBeenCalledWith('channel_99');
       expect(client.join).toHaveBeenCalledWith('channel_5');
-      expect(result).toEqual(msgs);
     });
   });
 
@@ -78,7 +80,10 @@ describe('MessagesGateway', () => {
       (gateway as any).server.to.mockReturnValue({ emit: emitMock });
       const client = { data: { user: { id: 1 } } };
 
-      await gateway.update({ messageId: 1, content: 'new' } as any, client as any);
+      await gateway.update(
+        { messageId: 1, content: 'new' } as any,
+        client as any,
+      );
       expect(emitMock).toHaveBeenCalledWith('messageUpdated', updated);
     });
   });
