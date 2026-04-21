@@ -25,7 +25,10 @@ const mockServersService = {
 };
 
 const mockGateway = {
-  server: { to: jest.fn().mockReturnValue({ emit: jest.fn() }) },
+  server: {
+    to: jest.fn().mockReturnValue({ emit: jest.fn() }),
+    emit: jest.fn(),
+  },
   emitServerUpdate: jest.fn(),
 };
 

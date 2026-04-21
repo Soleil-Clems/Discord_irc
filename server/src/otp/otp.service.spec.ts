@@ -35,7 +35,7 @@ const mockRepo = () => ({
   delete: jest.fn(),
 });
 
-const buildConfig = (env: Record<string, string>) =>
+const buildConfig = (env: Record<string, string | undefined>) =>
   ({
     get: jest.fn((key: string) => env[key]),
   }) as unknown as ConfigService;
