@@ -10,7 +10,6 @@ import { OtpCode } from './entities/otp-code.entity';
 
 @Injectable()
 export class OtpService {
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   private resend: Resend | null = null;
   private mailtrapTransporter: nodemailer.Transporter | null = null;
   private isDev: boolean;
@@ -34,7 +33,6 @@ export class OtpService {
         },
       });
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       this.resend = new Resend(
         this.configService.get<string>('RESEND_API_KEY'),
       );

@@ -255,7 +255,9 @@ export class ServersService {
     });
 
     const now = new Date();
-    const expiredBans = allBans.filter((b) => b.expiresAt && b.expiresAt <= now);
+    const expiredBans = allBans.filter(
+      (b) => b.expiresAt && b.expiresAt <= now,
+    );
     if (expiredBans.length > 0) {
       await this.serverBanRepository.remove(expiredBans);
     }

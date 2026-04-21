@@ -250,7 +250,11 @@ export class ConversationsService {
 
     return this.privateMessageRepository.findOne({
       where: { id: messageId },
-      relations: { sender: true, reactions: { author: true }, conversation: { user1: true, user2: true } },
+      relations: {
+        sender: true,
+        reactions: { author: true },
+        conversation: { user1: true, user2: true },
+      },
     });
   }
 

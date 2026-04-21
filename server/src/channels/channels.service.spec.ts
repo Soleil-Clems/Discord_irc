@@ -112,13 +112,17 @@ describe('ChannelsService', () => {
   describe('update', () => {
     it('lève NotFoundException si channel non trouvé', async () => {
       channelRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.update(1, { name: 'new' } as any, 1)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update(1, { name: 'new' } as any, 1),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('lève ForbiddenException si permissions insuffisantes', async () => {
       channelRepo.findOne.mockResolvedValue({ id: 1, server: { id: 1 } });
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Member });
-      await expect(service.update(1, { name: 'new' } as any, 1)).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update(1, { name: 'new' } as any, 1),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('met à jour et retourne le channel', async () => {

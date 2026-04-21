@@ -80,22 +80,36 @@ describe('ServersService', () => {
   describe('canBanUser', () => {
     it('Owner peut bannir tout le monde', () => {
       expect(service.canBanUser(ServerRole.Owner, ServerRole.Admin)).toBe(true);
-      expect(service.canBanUser(ServerRole.Owner, ServerRole.Member)).toBe(true);
-      expect(service.canBanUser(ServerRole.Owner, ServerRole.Moderator)).toBe(true);
+      expect(service.canBanUser(ServerRole.Owner, ServerRole.Member)).toBe(
+        true,
+      );
+      expect(service.canBanUser(ServerRole.Owner, ServerRole.Moderator)).toBe(
+        true,
+      );
     });
 
     it('Admin peut bannir Moderator et Member', () => {
-      expect(service.canBanUser(ServerRole.Admin, ServerRole.Moderator)).toBe(true);
-      expect(service.canBanUser(ServerRole.Admin, ServerRole.Member)).toBe(true);
+      expect(service.canBanUser(ServerRole.Admin, ServerRole.Moderator)).toBe(
+        true,
+      );
+      expect(service.canBanUser(ServerRole.Admin, ServerRole.Member)).toBe(
+        true,
+      );
     });
 
     it('Admin ne peut pas bannir Owner ou Admin', () => {
-      expect(service.canBanUser(ServerRole.Admin, ServerRole.Owner)).toBe(false);
-      expect(service.canBanUser(ServerRole.Admin, ServerRole.Admin)).toBe(false);
+      expect(service.canBanUser(ServerRole.Admin, ServerRole.Owner)).toBe(
+        false,
+      );
+      expect(service.canBanUser(ServerRole.Admin, ServerRole.Admin)).toBe(
+        false,
+      );
     });
 
     it('Member ne peut bannir personne', () => {
-      expect(service.canBanUser(ServerRole.Member, ServerRole.Member)).toBe(false);
+      expect(service.canBanUser(ServerRole.Member, ServerRole.Member)).toBe(
+        false,
+      );
     });
   });
 
@@ -116,7 +130,9 @@ describe('ServersService', () => {
   describe('create', () => {
     it('lève NotFoundException si user non trouvé', async () => {
       userRepo.findOneBy.mockResolvedValue(undefined);
-      await expect(service.create({ name: 'Test' }, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.create({ name: 'Test' }, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('crée serveur, membership Owner et channel general', async () => {
@@ -131,7 +147,9 @@ describe('ServersService', () => {
 
       const result = await service.create({ name: 'Test' }, 1);
       expect(result).toEqual(server);
-      expect(memberRepo.create).toHaveBeenCalledWith(expect.objectContaining({ role: ServerRole.Owner }));
+      expect(memberRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ role: ServerRole.Owner }),
+      );
       expect(mockChannelService.create).toHaveBeenCalled();
     });
   });
@@ -169,7 +187,9 @@ describe('ServersService', () => {
   describe('getMembers', () => {
     it('lève ForbiddenException si non membre', async () => {
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.getMembers(1, 1, {})).rejects.toThrow(ForbiddenException);
+      await expect(service.getMembers(1, 1, {})).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('retourne les membres avec pagination', async () => {
@@ -197,12 +217,19 @@ describe('ServersService', () => {
   describe('update', () => {
     it('lève ForbiddenException si non membre', async () => {
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.update(1, { name: 'new', img: '' } as any, 1)).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update(1, { name: 'new', img: '' } as any, 1),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('lève ForbiddenException si non Owner', async () => {
-      memberRepo.findOne.mockResolvedValue({ role: ServerRole.Admin, server: { id: 1 } });
-      await expect(service.update(1, { name: 'new', img: '' } as any, 1)).rejects.toThrow(ForbiddenException);
+      memberRepo.findOne.mockResolvedValue({
+        role: ServerRole.Admin,
+        server: { id: 1 },
+      });
+      await expect(
+        service.update(1, { name: 'new', img: '' } as any, 1),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('met à jour le serveur si Owner', async () => {
@@ -210,7 +237,11 @@ describe('ServersService', () => {
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Owner, server });
       serverRepo.save.mockResolvedValue({ ...server, name: 'new' });
 
-      const result = await service.update(1, { name: 'new', img: '' } as any, 1);
+      const result = await service.update(
+        1,
+        { name: 'new', img: '' } as any,
+        1,
+      );
       expect(result).toHaveProperty('name', 'new');
     });
   });
@@ -222,7 +253,10 @@ describe('ServersService', () => {
     });
 
     it('lève ForbiddenException si non Owner', async () => {
-      memberRepo.findOne.mockResolvedValue({ role: ServerRole.Admin, server: { id: 1 } });
+      memberRepo.findOne.mockResolvedValue({
+        role: ServerRole.Admin,
+        server: { id: 1 },
+      });
       await expect(service.remove(1, 1)).rejects.toThrow(ForbiddenException);
     });
 
@@ -239,13 +273,17 @@ describe('ServersService', () => {
   describe('joinServer', () => {
     it('lève ForbiddenException si banni', async () => {
       banRepo.findOne.mockResolvedValue({ id: 1 });
-      await expect(service.joinServer(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.joinServer(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève ForbiddenException si déjà membre', async () => {
       banRepo.findOne.mockResolvedValue(undefined);
       memberRepo.findOne.mockResolvedValueOnce({ id: 1 });
-      await expect(service.joinServer(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.joinServer(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('crée le membership et envoie la notification', async () => {
@@ -259,21 +297,27 @@ describe('ServersService', () => {
 
       const result = await service.joinServer(1, 1);
       expect(result).toEqual(newMember);
-      expect(memberRepo.create).toHaveBeenCalledWith(expect.objectContaining({ role: ServerRole.Member }));
+      expect(memberRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ role: ServerRole.Member }),
+      );
     });
   });
 
   describe('changeMemberRole', () => {
     it('lève ForbiddenException si requester non Owner', async () => {
       memberRepo.findOne.mockResolvedValueOnce({ role: ServerRole.Admin });
-      await expect(service.changeMemberRole(1, 1, 2, ServerRole.Moderator)).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.changeMemberRole(1, 1, 2, ServerRole.Moderator),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('lève NotFoundException si target non trouvé', async () => {
       memberRepo.findOne
         .mockResolvedValueOnce({ role: ServerRole.Owner })
         .mockResolvedValueOnce(undefined);
-      await expect(service.changeMemberRole(1, 1, 2, ServerRole.Moderator)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.changeMemberRole(1, 1, 2, ServerRole.Moderator),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('change le rôle du membre', async () => {
@@ -281,28 +325,42 @@ describe('ServersService', () => {
       memberRepo.findOne
         .mockResolvedValueOnce({ role: ServerRole.Owner })
         .mockResolvedValueOnce(target);
-      memberRepo.save.mockResolvedValue({ ...target, role: ServerRole.Moderator });
+      memberRepo.save.mockResolvedValue({
+        ...target,
+        role: ServerRole.Moderator,
+      });
 
-      const result = await service.changeMemberRole(1, 1, 2, ServerRole.Moderator);
+      const result = await service.changeMemberRole(
+        1,
+        1,
+        2,
+        ServerRole.Moderator,
+      );
       expect(result.role).toBe(ServerRole.Moderator);
     });
   });
 
   describe('transferOwnership', () => {
     it('lève BadRequestException si requesterId === newOwnerId', async () => {
-      await expect(service.transferOwnership(1, 1, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.transferOwnership(1, 1, 1)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('lève ForbiddenException si requester non Owner', async () => {
       memberRepo.findOne.mockResolvedValueOnce({ role: ServerRole.Admin });
-      await expect(service.transferOwnership(1, 1, 2)).rejects.toThrow(ForbiddenException);
+      await expect(service.transferOwnership(1, 1, 2)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève NotFoundException si newOwner non trouvé', async () => {
       memberRepo.findOne
         .mockResolvedValueOnce({ role: ServerRole.Owner })
         .mockResolvedValueOnce(undefined);
-      await expect(service.transferOwnership(1, 1, 2)).rejects.toThrow(NotFoundException);
+      await expect(service.transferOwnership(1, 1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('transfère la propriété avec succès', async () => {
@@ -323,22 +381,28 @@ describe('ServersService', () => {
   describe('leaveServer', () => {
     it('lève NotFoundException si non membre', async () => {
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.leaveServer(1, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.leaveServer(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lève ForbiddenException si Owner sans newOwnerId', async () => {
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Owner });
-      await expect(service.leaveServer(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.leaveServer(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève NotFoundException si newOwner invalide', async () => {
       memberRepo.findOne
         .mockResolvedValueOnce({ role: ServerRole.Owner })
         .mockResolvedValueOnce(undefined);
-      await expect(service.leaveServer(1, 1, 2)).rejects.toThrow(NotFoundException);
+      await expect(service.leaveServer(1, 1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
-    it("Owner transfère la propriété puis quitte", async () => {
+    it('Owner transfère la propriété puis quitte', async () => {
       const membership = { id: 1, role: ServerRole.Owner };
       const newOwner = { id: 2, role: ServerRole.Member };
       memberRepo.findOne
@@ -364,12 +428,16 @@ describe('ServersService', () => {
   describe('createInvitation', () => {
     it('lève ForbiddenException si non membre', async () => {
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.createInvitation(1, 1, {})).rejects.toThrow(ForbiddenException);
+      await expect(service.createInvitation(1, 1, {})).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('crée une invitation', async () => {
       memberRepo.findOne.mockResolvedValue({ id: 1 });
-      invitationRepo.save.mockImplementation((inv) => Promise.resolve({ ...inv, id: 1, createdAt: new Date() }));
+      invitationRepo.save.mockImplementation((inv) =>
+        Promise.resolve({ ...inv, id: 1, createdAt: new Date() }),
+      );
 
       const result = await service.createInvitation(1, 1, { maxUses: 10 });
       expect(result).toHaveProperty('code');
@@ -380,12 +448,16 @@ describe('ServersService', () => {
   describe('getServerInvitations', () => {
     it('lève ForbiddenException si non membre', async () => {
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.getServerInvitations(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.getServerInvitations(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève ForbiddenException si rôle insuffisant', async () => {
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Member });
-      await expect(service.getServerInvitations(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.getServerInvitations(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('retourne les invitations pour Admin/Owner', async () => {
@@ -399,18 +471,24 @@ describe('ServersService', () => {
   describe('deleteInvitation', () => {
     it('lève ForbiddenException si non membre', async () => {
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.deleteInvitation(1, 1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.deleteInvitation(1, 1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève ForbiddenException si rôle insuffisant', async () => {
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Member });
-      await expect(service.deleteInvitation(1, 1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.deleteInvitation(1, 1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève NotFoundException si invitation non trouvée', async () => {
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Owner });
       invitationRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.deleteInvitation(1, 1, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.deleteInvitation(1, 1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('supprime et retourne { success: true }', async () => {
@@ -426,17 +504,23 @@ describe('ServersService', () => {
 
   describe('banUser', () => {
     it('lève BadRequestException si self-ban', async () => {
-      await expect(service.banUser(1, 1, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.banUser(1, 1, 1)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('lève ForbiddenException si requester non membre', async () => {
       memberRepo.findOne.mockResolvedValueOnce(undefined);
-      await expect(service.banUser(1, 1, 2)).rejects.toThrow(ForbiddenException);
+      await expect(service.banUser(1, 1, 2)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève ForbiddenException si requester est Member', async () => {
       memberRepo.findOne.mockResolvedValueOnce({ role: ServerRole.Member });
-      await expect(service.banUser(1, 1, 2)).rejects.toThrow(ForbiddenException);
+      await expect(service.banUser(1, 1, 2)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève NotFoundException si target non membre', async () => {
@@ -450,7 +534,9 @@ describe('ServersService', () => {
       memberRepo.findOne
         .mockResolvedValueOnce({ role: ServerRole.Admin })
         .mockResolvedValueOnce({ role: ServerRole.Admin });
-      await expect(service.banUser(1, 1, 2)).rejects.toThrow(ForbiddenException);
+      await expect(service.banUser(1, 1, 2)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève BadRequestException si déjà banni', async () => {
@@ -458,7 +544,9 @@ describe('ServersService', () => {
         .mockResolvedValueOnce({ role: ServerRole.Owner })
         .mockResolvedValueOnce({ role: ServerRole.Member });
       banRepo.findOne.mockResolvedValue({ id: 1 });
-      await expect(service.banUser(1, 1, 2)).rejects.toThrow(BadRequestException);
+      await expect(service.banUser(1, 1, 2)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('bannit avec succès', async () => {
@@ -478,18 +566,24 @@ describe('ServersService', () => {
   describe('unbanUser', () => {
     it('lève ForbiddenException si non membre', async () => {
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.unbanUser(1, 1, 2)).rejects.toThrow(ForbiddenException);
+      await expect(service.unbanUser(1, 1, 2)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève ForbiddenException si rôle insuffisant', async () => {
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Member });
-      await expect(service.unbanUser(1, 1, 2)).rejects.toThrow(ForbiddenException);
+      await expect(service.unbanUser(1, 1, 2)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('lève NotFoundException si non banni', async () => {
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Owner });
       banRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.unbanUser(1, 1, 2)).rejects.toThrow(NotFoundException);
+      await expect(service.unbanUser(1, 1, 2)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('déban avec succès', async () => {
@@ -506,13 +600,21 @@ describe('ServersService', () => {
   describe('getBannedUsers', () => {
     it('lève ForbiddenException si non membre', async () => {
       memberRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.getBannedUsers(1, 1)).rejects.toThrow(ForbiddenException);
+      await expect(service.getBannedUsers(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('retourne la liste des bannis mappée', async () => {
       memberRepo.findOne.mockResolvedValue({ role: ServerRole.Owner });
       banRepo.find.mockResolvedValue([
-        { id: 1, user: { id: 2, username: 'banned' }, bannedBy: { id: 1, username: 'owner' }, reason: 'spam', bannedAt: new Date() },
+        {
+          id: 1,
+          user: { id: 2, username: 'banned' },
+          bannedBy: { id: 1, username: 'owner' },
+          reason: 'spam',
+          bannedAt: new Date(),
+        },
       ]);
 
       const result = await service.getBannedUsers(1, 1);
