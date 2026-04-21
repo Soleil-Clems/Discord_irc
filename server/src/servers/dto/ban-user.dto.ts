@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class BanUserDto {
   @IsNumber()
@@ -7,4 +7,9 @@ export class BanUserDto {
   @IsOptional()
   @IsString()
   reason?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  durationHours?: number;
 }

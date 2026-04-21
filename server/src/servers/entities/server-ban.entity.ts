@@ -29,4 +29,7 @@ export class ServerBan {
 
   @CreateDateColumn()
   bannedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  expiresAt: Date | null;
 }

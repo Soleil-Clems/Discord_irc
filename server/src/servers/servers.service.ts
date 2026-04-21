@@ -60,7 +60,15 @@ export class ServersService {
         user: { id: userId },
       },
     });
-    return !!ban;
+
+    if (!ban) return false;
+
+    if (ban.expiresAt && ban.expiresAt <= new Date()) {
+      await this.serverBanRepository.remove(ban);
+      return false;
+    }
+
+    return true;
   }
 
   private async sendJoinNotification(serverId: number, userId: number) {
@@ -107,6 +115,7 @@ export class ServersService {
     requesterId: number,
     targetUserId: number,
     reason?: string,
+    durationHours?: number,
   ) {
     if (requesterId === targetUserId) {
       throw new BadRequestException('Vous ne pouvez pas vous bannir vous-même');
@@ -162,11 +171,16 @@ export class ServersService {
       throw new BadRequestException('Cet utilisateur est déjà banni');
     }
 
+    const expiresAt = durationHours
+      ? new Date(Date.now() + durationHours * 60 * 60 * 1000)
+      : null;
+
     const ban = this.serverBanRepository.create({
       server: { id: serverId },
       user: { id: targetUserId },
       bannedBy: { id: requesterId },
       reason: reason || null,
+      expiresAt,
     });
 
     await this.serverBanRepository.save(ban);
@@ -234,11 +248,21 @@ export class ServersService {
       );
     }
 
-    const bans = await this.serverBanRepository.find({
+    const allBans = await this.serverBanRepository.find({
       where: { server: { id: serverId } },
       relations: ['user', 'bannedBy'],
       order: { bannedAt: 'DESC' },
     });
+
+    const now = new Date();
+    const expiredBans = allBans.filter(
+      (b) => b.expiresAt && b.expiresAt <= now,
+    );
+    if (expiredBans.length > 0) {
+      await this.serverBanRepository.remove(expiredBans);
+    }
+
+    const bans = allBans.filter((b) => !b.expiresAt || b.expiresAt > now);
 
     return bans.map((ban) => ({
       id: ban.id,
@@ -254,6 +278,7 @@ export class ServersService {
         : null,
       reason: ban.reason,
       bannedAt: ban.bannedAt,
+      expiresAt: ban.expiresAt,
     }));
   }
 
