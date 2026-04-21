@@ -29,4 +29,16 @@ describe('ServersGateway', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('is defined', () => expect(gateway).toBeDefined());
+
+  it('handleConnection et handleDisconnect sont callables', () => {
+    expect(() => gateway.handleConnection()).not.toThrow();
+    expect(() => gateway.handleDisconnect()).not.toThrow();
+  });
+
+  it('findAll délègue au service avec l id utilisateur', () => {
+    mockServersService.findAll.mockReturnValue(['s1'] as any);
+    const result = gateway.findAll({ id: 42 });
+    expect(mockServersService.findAll).toHaveBeenCalledWith(42);
+    expect(result).toEqual(['s1']);
+  });
 });
