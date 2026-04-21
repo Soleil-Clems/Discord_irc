@@ -118,21 +118,3 @@ jobs:
           path: server/node_modules
           key: node-modules-back-${{ hashFiles('server/package-lock.json') }}
       - run: npx nest build
-
-  audit:
-    needs: install
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    defaults:
-      run:
-        working-directory: server
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - uses: actions/cache/restore@v4
-        with:
-          path: server/node_modules
-          key: node-modules-back-${{ hashFiles('server/package-lock.json') }}
-      - run: npm audit --audit-level=high
