@@ -13,6 +13,7 @@ import {
 } from './entities/friend-request.entity';
 import { BlockedUser } from './entities/blocked-user.entity';
 import { Users } from '@/users/entities/users.entity';
+import { MessagesGateway } from '@/messages/messages.gateway';
 
 @Injectable()
 export class FriendsService {
@@ -33,6 +34,7 @@ export class FriendsService {
     private blockedUserRepository: Repository<BlockedUser>,
     @InjectRepository(Users)
     private usersRepository: Repository<Users>,
+    private readonly messagesGateway: MessagesGateway,
   ) {}
 
   async sendRequest(
@@ -81,7 +83,27 @@ export class FriendsService {
       receiver: { id: receiverId },
     });
 
-    return this.friendRequestRepository.save(request);
+    const saved = await this.friendRequestRepository.save(request);
+
+    try {
+      const sender = await this.usersRepository.findOne({
+        where: { id: senderId },
+        select: this.safeUserSelect,
+      });
+      if (sender) {
+        this.messagesGateway.server
+          .to(`user:${receiverId}`)
+          .emit('friendRequestReceived', {
+            requestId: saved.id,
+            senderId,
+            senderName: sender.firstname || sender.username,
+          });
+      }
+    } catch (err) {
+      console.warn('friendRequestReceived dispatch failed', err);
+    }
+
+    return saved;
   }
 
   async acceptRequest(
@@ -101,7 +123,27 @@ export class FriendsService {
     }
 
     request.status = FriendRequestStatus.Accepted;
-    return this.friendRequestRepository.save(request);
+    const saved = await this.friendRequestRepository.save(request);
+
+    try {
+      const accepter = await this.usersRepository.findOne({
+        where: { id: userId },
+        select: this.safeUserSelect,
+      });
+      if (accepter) {
+        this.messagesGateway.server
+          .to(`user:${request.sender.id}`)
+          .emit('friendRequestAccepted', {
+            requestId: saved.id,
+            accepterId: userId,
+            accepterName: accepter.firstname || accepter.username,
+          });
+      }
+    } catch (err) {
+      console.warn('friendRequestAccepted dispatch failed', err);
+    }
+
+    return saved;
   }
 
   async declineRequest(

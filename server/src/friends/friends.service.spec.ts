@@ -13,6 +13,7 @@ import {
 } from './entities/friend-request.entity';
 import { BlockedUser } from './entities/blocked-user.entity';
 import { Users } from '../users/entities/users.entity';
+import { MessagesGateway } from '../messages/messages.gateway';
 
 const mockRepo = () => ({
   findOne: jest.fn(),
@@ -20,6 +21,10 @@ const mockRepo = () => ({
   save: jest.fn(),
   create: jest.fn(),
   remove: jest.fn(),
+});
+
+const mockMessagesGateway = () => ({
+  server: { to: jest.fn().mockReturnValue({ emit: jest.fn() }) },
 });
 
 describe('FriendsService', () => {
@@ -35,6 +40,7 @@ describe('FriendsService', () => {
         { provide: getRepositoryToken(FriendRequest), useFactory: mockRepo },
         { provide: getRepositoryToken(BlockedUser), useFactory: mockRepo },
         { provide: getRepositoryToken(Users), useFactory: mockRepo },
+        { provide: MessagesGateway, useFactory: mockMessagesGateway },
       ],
     }).compile();
 
