@@ -15,7 +15,14 @@ import { DmsModule } from '@/dms/dms.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Message, Channel, Server, ServerMember, Users, Reaction]),
+    TypeOrmModule.forFeature([
+      Message,
+      Channel,
+      Server,
+      ServerMember,
+      Users,
+      Reaction,
+    ]),
     JwtModule.register({
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '7d' },

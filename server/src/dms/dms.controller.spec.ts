@@ -27,7 +27,12 @@ describe('DmsController', () => {
 
   describe('upload', () => {
     const makeFile = (name: string, size = 1024): Express.Multer.File =>
-      ({ originalname: name, size, buffer: Buffer.from('x'), mimetype: 'image/png' } as any);
+      ({
+        originalname: name,
+        size,
+        buffer: Buffer.from('x'),
+        mimetype: 'image/png',
+      }) as any;
 
     it('upload une image et délègue à dmsService.uploadSingleFile', async () => {
       mockDmsService.uploadSingleFile.mockResolvedValue({ url: 'u', key: 'k' });
@@ -51,12 +56,16 @@ describe('DmsController', () => {
 
     it('lève BadRequestException si type de fichier non autorisé', async () => {
       const file = makeFile('virus.exe');
-      await expect(controller.upload(file, 'img')).rejects.toThrow(BadRequestException);
+      await expect(controller.upload(file, 'img')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('lève BadRequestException si fichier trop grand', async () => {
       const file = makeFile('big.png', 100 * 1024 * 1024);
-      await expect(controller.upload(file, 'img')).rejects.toThrow(BadRequestException);
+      await expect(controller.upload(file, 'img')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('utilise la catégorie file par défaut si catégorie inconnue', async () => {
