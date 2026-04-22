@@ -9,14 +9,17 @@ import { jwtConstants } from './constant';
 import { JwtStrategy } from './jwt.strategy';
 import { Users } from '@/users/entities/users.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OtpModule } from '@/otp/otp.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
     UsersModule,
     OtpModule,
-    TypeOrmModule.forFeature([Users, RefreshToken]),
+    ConfigModule,
+    TypeOrmModule.forFeature([Users, RefreshToken, PasswordResetToken]),
     PassportModule,
     JwtModule.register({
       secret: jwtConstants.secret,
