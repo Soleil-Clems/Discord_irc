@@ -12,4 +12,9 @@ export class BanUserDto {
   @IsNumber()
   @IsPositive()
   durationHours?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  durationMinutes?: number;
 }
