@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthService } from './auth.service';
 import { Users } from '../users/entities/users.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn().mockResolvedValue('hashed-token'),
@@ -29,6 +31,14 @@ const mockJwtService = {
   verifyAsync: jest.fn(),
 };
 
+const mockConfigService = {
+  get: jest.fn((key: string) => {
+    if (key === 'NODE_ENV') return 'test';
+    if (key === 'FRONTEND_URL') return 'http://localhost:3000';
+    return undefined;
+  }),
+};
+
 const mockUser = () => ({
   id: 1,
   email: 'user@test.com',
@@ -47,8 +57,13 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: JwtService, useValue: mockJwtService },
+        { provide: ConfigService, useValue: mockConfigService },
         { provide: getRepositoryToken(Users), useFactory: mockRepo },
         { provide: getRepositoryToken(RefreshToken), useFactory: mockRepo },
+        {
+          provide: getRepositoryToken(PasswordResetToken),
+          useFactory: mockRepo,
+        },
       ],
     }).compile();
 

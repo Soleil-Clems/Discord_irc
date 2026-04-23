@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
@@ -12,15 +13,24 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Users } from '@/users/entities/users.entity';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, MoreThan } from 'typeorm';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { PasswordResetToken } from './entities/password-reset-token.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { jwtConstants } from './constant';
 import { TokenResponseDto } from './dto/token-response.dto';
 
+const RESET_THROTTLE_MS = 60 * 1000;
+const DUMMY_BCRYPT_HASH =
+  '$2b$10$CwTycUXWue0Thq9StjUM0uJ8ZQ9yDgS9gDQgJj9wT2mVcDqUqU7py';
+
+function hashResetToken(raw: string): string {
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private resend: Resend | null = null;
   private mailer: nodemailer.Transporter | null = null;
   private isDev: boolean;
@@ -207,7 +217,20 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) return; // ne pas révéler si l'email existe
+
+    if (!user) {
+      // Temps constant : évite de trahir l'existence d'un compte par la latence
+      await bcrypt.compare(email, DUMMY_BCRYPT_HASH);
+      return;
+    }
+
+    const recent = await this.passwordResetRepository.findOne({
+      where: {
+        userId: user.id,
+        createdAt: MoreThan(new Date(Date.now() - RESET_THROTTLE_MS)),
+      },
+    });
+    if (recent) return; // throttle : pas plus d'un email toutes les RESET_THROTTLE_MS
 
     await this.passwordResetRepository.update(
       { userId: user.id, isUsed: false },
@@ -215,34 +238,42 @@ export class AuthService {
     );
 
     const rawToken = crypto.randomBytes(32).toString('hex');
-    const tokenHash = await bcrypt.hash(rawToken, 10);
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 heure
+    const tokenHash = hashResetToken(rawToken);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
     await this.passwordResetRepository.save(
-      this.passwordResetRepository.create({ tokenHash, userId: user.id, expiresAt }),
+      this.passwordResetRepository.create({
+        tokenHash,
+        userId: user.id,
+        expiresAt,
+      }),
     );
 
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    if (!frontendUrl) {
+      throw new Error('FRONTEND_URL is not configured');
+    }
     const resetLink = `${frontendUrl}/reset-password?token=${rawToken}`;
 
-    await this.sendResetEmail(email, resetLink);
+    try {
+      await this.sendResetEmail(email, resetLink);
+    } catch (err) {
+      // On n'expose rien à l'appelant : le controller renvoie toujours le même message générique
+      this.logger.error(
+        `Failed to send password reset email: ${(err as Error).message}`,
+      );
+    }
   }
 
   async resetPassword(rawToken: string, newPassword: string): Promise<void> {
-    const tokens = await this.passwordResetRepository.find({
-      where: { isUsed: false },
+    const tokenHash = hashResetToken(rawToken);
+
+    const matched = await this.passwordResetRepository.findOne({
+      where: { tokenHash, isUsed: false },
     });
 
-    let matched: PasswordResetToken | null = null;
-    for (const t of tokens) {
-      if (await bcrypt.compare(rawToken, t.tokenHash)) {
-        matched = t;
-        break;
-      }
-    }
-
     if (!matched) throw new BadRequestException('Lien invalide ou expiré');
+
     if (matched.expiresAt < new Date()) {
       matched.isUsed = true;
       await this.passwordResetRepository.save(matched);
@@ -250,10 +281,15 @@ export class AuthService {
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    await this.userRepository.update({ id: matched.userId }, { password: hashed });
+    await this.userRepository.update(
+      { id: matched.userId },
+      { password: hashed },
+    );
 
-    matched.isUsed = true;
-    await this.passwordResetRepository.save(matched);
+    await this.passwordResetRepository.update(
+      { userId: matched.userId, isUsed: false },
+      { isUsed: true },
+    );
 
     await this.revokeAllUserTokens(matched.userId);
   }

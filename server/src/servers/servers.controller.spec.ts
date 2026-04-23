@@ -175,6 +175,7 @@ describe('ServersController', () => {
       3,
       'spam',
       24,
+      undefined,
     );
     expect(emit).toHaveBeenCalledWith('memberBanned', {
       serverId: 1,

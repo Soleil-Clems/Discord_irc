@@ -154,7 +154,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     await this.authService.forgotPassword(dto.email);
-    return { message: 'Si cet email existe, un lien de réinitialisation a été envoyé' };
+    return {
+      message: 'Si cet email existe, un lien de réinitialisation a été envoyé',
+    };
   }
 
   @Post('reset-password')
