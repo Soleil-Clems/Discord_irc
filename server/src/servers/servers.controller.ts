@@ -190,6 +190,7 @@ export class ServersController {
       dto.userId,
       dto.reason,
       dto.durationHours,
+      dto.durationMinutes,
     );
     this.serversGateway.server.emit('memberBanned', {
       serverId,
