@@ -8,6 +8,7 @@ import { ServerMember } from '@/servers/entities/server-member.entity';
 import { Server } from '@/servers/entities/server.entity';
 import { Message } from './entities/message.entity';
 import { Reaction } from './entities/reaction.entity';
+import { Mention } from './entities/mention.entity';
 import { Users } from '@/users/entities/users.entity'; // 👈 ajouté
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from '@/auth/constant';
@@ -22,6 +23,7 @@ import { DmsModule } from '@/dms/dms.module';
       ServerMember,
       Users,
       Reaction,
+      Mention,
     ]),
     JwtModule.register({
       secret: jwtConstants.secret,

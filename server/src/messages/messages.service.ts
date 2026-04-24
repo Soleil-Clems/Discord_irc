@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { Message } from './entities/message.entity';
 import { Channel } from '@/channels/entities/channel.entity';
@@ -17,6 +17,7 @@ import { UpdateMessageDto } from './dto/update-message.dto';
 import { ChannelType } from '@/channels/enums/channel-type.enum';
 import { MessageType } from './enums/message-type.enum';
 import { Reaction } from './entities/reaction.entity';
+import { Mention } from './entities/mention.entity';
 
 @Injectable()
 export class MessagesService {
@@ -35,6 +36,9 @@ export class MessagesService {
 
     @InjectRepository(ServerMember)
     private readonly serverMemberRepository: Repository<ServerMember>,
+
+    @InjectRepository(Mention)
+    private readonly mentionRepository: Repository<Mention>,
   ) {}
 
   async create(createMessageDto: CreateMessageDto, userId: number) {
@@ -77,7 +81,38 @@ export class MessagesService {
       channel: channel,
     });
 
-    return this.messageRepository.save(message);
+    const savedMessage = await this.messageRepository.save(message);
+
+    const usernames = (createMessageDto.content.match(/@(\w+)/g) ?? []).map(
+      (m: string) => m.slice(1),
+    );
+
+    if (usernames.length > 0) {
+      const mentionedUsers = await this.userRepository.findBy({
+        username: In(usernames),
+      });
+
+      const mentions = mentionedUsers.map((mentionedUser) =>
+        this.mentionRepository.create({
+          user: mentionedUser,
+          message: savedMessage,
+        }),
+      );
+      await this.mentionRepository.save(mentions);
+    }
+
+    return this.messageRepository.findOne({
+      where: { id: savedMessage.id },
+      relations: { author: true, reactions: true, mentions: { user: true } },
+    });
+  }
+
+  async getMentionedUserIds(messageId: number): Promise<number[]> {
+    const mentions = await this.mentionRepository.find({
+      where: { message: { id: messageId } },
+      relations: { user: true },
+    });
+    return mentions.map((m) => m.user.id);
   }
 
   async createSystemMessage(
@@ -140,7 +175,11 @@ export class MessagesService {
 
     const [messages, total] = await this.messageRepository.findAndCount({
       where: { channel: { id: channelId } },
-      relations: { author: true, reactions: { author: true } },
+      relations: {
+        author: true,
+        reactions: { author: true },
+        mentions: { user: true },
+      },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,

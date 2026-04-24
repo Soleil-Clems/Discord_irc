@@ -43,8 +43,24 @@ export class MessagesGateway
       createMessageDto,
       user.id,
     );
+
+    if (!newMessage) return null;
+
     const roomName = `channel_${createMessageDto.channelId}`;
     this.server.to(roomName).emit('newMessage', newMessage);
+
+    const mentionedUserIds = await this.messagesService.getMentionedUserIds(
+      newMessage.id,
+    );
+    for (const mentionedUserId of mentionedUserIds) {
+      if (mentionedUserId !== user.id) {
+        this.server.to(`user:${mentionedUserId}`).emit('mentionNotification', {
+          messageId: newMessage.id,
+          channelId: createMessageDto.channelId,
+          senderUsername: user.username,
+        });
+      }
+    }
 
     try {
       const notifInfo = await this.messagesService.getChannelNotificationInfo(
