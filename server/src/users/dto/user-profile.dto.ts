@@ -5,6 +5,7 @@ export class UserProfileDto {
   lastname: string;
   description: string | null;
   img: string | null;
+  banner: string | null;
   isActive: boolean;
   lastSeen: Date | null;
   createdAt: Date;

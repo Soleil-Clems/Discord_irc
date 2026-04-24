@@ -1,5 +1,6 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Body,
@@ -14,6 +15,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   Query,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -158,6 +160,7 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('file'))
   @Patch('banner/:id')
   async updateBanner(
+    @Request() req,
     @Param(
       'id',
       new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
@@ -180,6 +183,10 @@ export class UsersController {
     )
     file: Express.Multer.File,
   ) {
+    if (req.user?.id !== id) {
+      throw new ForbiddenException('You can only update your own banner');
+    }
+
     const uploadResult = await this.dmsService.uploadSingleFile({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       file,
