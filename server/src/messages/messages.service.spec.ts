@@ -21,6 +21,18 @@ const mockRepo = () => ({
   save: jest.fn(),
   create: jest.fn(),
   remove: jest.fn(),
+  manager: {
+    transaction: jest.fn(async (cb: (manager: unknown) => Promise<unknown>) =>
+      cb({
+        create: jest.fn(
+          (_entity: unknown, data: Record<string, unknown>) => data,
+        ),
+        save: jest.fn((x: Record<string, unknown> | unknown[]) =>
+          Promise.resolve(Array.isArray(x) ? x : { id: 1, ...x }),
+        ),
+      }),
+    ),
+  },
 });
 
 describe('MessagesService', () => {
