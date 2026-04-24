@@ -74,45 +74,58 @@ export class MessagesService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
-    const message = this.messageRepository.create({
-      content: createMessageDto.content,
-      type: createMessageDto.type,
-      author: user,
-      channel: channel,
-    });
+    const usernames = [
+      ...createMessageDto.content.matchAll(/(?<!\w)@(\w+)/g),
+    ].map((m) => m[1]);
 
-    const savedMessage = await this.messageRepository.save(message);
-
-    const usernames = (createMessageDto.content.match(/@(\w+)/g) ?? []).map(
-      (m: string) => m.slice(1),
-    );
-
+    let allowedMentions: Users[] = [];
     if (usernames.length > 0) {
       const mentionedUsers = await this.userRepository.findBy({
         username: In(usernames),
       });
 
-      const mentions = mentionedUsers.map((mentionedUser) =>
-        this.mentionRepository.create({
-          user: mentionedUser,
-          message: savedMessage,
-        }),
-      );
-      await this.mentionRepository.save(mentions);
+      if (mentionedUsers.length > 0) {
+        const members = await this.serverMemberRepository.find({
+          where: {
+            server: { id: channel.server.id },
+            members: { id: In(mentionedUsers.map((u) => u.id)) },
+          },
+          relations: { members: true },
+        });
+        const memberIds = new Set(members.map((m) => m.members.id));
+        allowedMentions = mentionedUsers.filter((u) => memberIds.has(u.id));
+      }
     }
 
+    const savedId = await this.messageRepository.manager.transaction(
+      async (manager) => {
+        const savedMessage = await manager.save(
+          manager.create(Message, {
+            content: createMessageDto.content,
+            type: createMessageDto.type,
+            author: user,
+            channel: channel,
+          }),
+        );
+
+        if (allowedMentions.length > 0) {
+          const mentions = allowedMentions.map((mentionedUser) =>
+            manager.create(Mention, {
+              user: mentionedUser,
+              message: savedMessage,
+            }),
+          );
+          await manager.save(mentions);
+        }
+
+        return savedMessage.id;
+      },
+    );
+
     return this.messageRepository.findOne({
-      where: { id: savedMessage.id },
+      where: { id: savedId },
       relations: { author: true, reactions: true, mentions: { user: true } },
     });
-  }
-
-  async getMentionedUserIds(messageId: number): Promise<number[]> {
-    const mentions = await this.mentionRepository.find({
-      where: { message: { id: messageId } },
-      relations: { user: true },
-    });
-    return mentions.map((m) => m.user.id);
   }
 
   async createSystemMessage(

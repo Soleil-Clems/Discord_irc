@@ -49,12 +49,9 @@ export class MessagesGateway
     const roomName = `channel_${createMessageDto.channelId}`;
     this.server.to(roomName).emit('newMessage', newMessage);
 
-    const mentionedUserIds = await this.messagesService.getMentionedUserIds(
-      newMessage.id,
-    );
-    for (const mentionedUserId of mentionedUserIds) {
-      if (mentionedUserId !== user.id) {
-        this.server.to(`user:${mentionedUserId}`).emit('mentionNotification', {
+    for (const mention of newMessage.mentions ?? []) {
+      if (mention.user.id !== user.id) {
+        this.server.to(`user:${mention.user.id}`).emit('mentionNotification', {
           messageId: newMessage.id,
           channelId: createMessageDto.channelId,
           senderUsername: user.username,
