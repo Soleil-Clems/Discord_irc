@@ -44,10 +44,10 @@ describe('MessagesController', () => {
   });
 
   describe('findAll', () => {
-    it('délègue à messagesService.findAll', async () => {
+    it('délègue à messagesService.findAll avec pagination', async () => {
       mockMessagesService.findAll.mockResolvedValue([]);
-      await controller.findAll(1);
-      expect(mockMessagesService.findAll).toHaveBeenCalledWith(1);
+      await controller.findAll(1, 1, 50);
+      expect(mockMessagesService.findAll).toHaveBeenCalledWith(1, 1, 50);
     });
   });
 
@@ -60,7 +60,11 @@ describe('MessagesController', () => {
       mockGateway.server.to.mockReturnValue({ emit: emitMock });
 
       await controller.update(req as any, 1, { content: 'new' } as any);
-      expect(mockMessagesService.update).toHaveBeenCalledWith(1, { content: 'new' }, 1);
+      expect(mockMessagesService.update).toHaveBeenCalledWith(
+        1,
+        { content: 'new' },
+        1,
+      );
       expect(mockGateway.server.to).toHaveBeenCalledWith('channel_5');
       expect(emitMock).toHaveBeenCalledWith('messageUpdated', updated);
     });
@@ -77,7 +81,10 @@ describe('MessagesController', () => {
       await controller.remove(req as any, 1);
       expect(mockMessagesService.remove).toHaveBeenCalledWith(1, 1);
       expect(mockGateway.server.to).toHaveBeenCalledWith('channel_5');
-      expect(emitMock).toHaveBeenCalledWith('messageDeleted', removed.messageId);
+      expect(emitMock).toHaveBeenCalledWith(
+        'messageDeleted',
+        removed.messageId,
+      );
     });
   });
 });

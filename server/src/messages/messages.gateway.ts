@@ -45,6 +45,30 @@ export class MessagesGateway
     );
     const roomName = `channel_${createMessageDto.channelId}`;
     this.server.to(roomName).emit('newMessage', newMessage);
+
+    try {
+      const notifInfo = await this.messagesService.getChannelNotificationInfo(
+        createMessageDto.channelId,
+        user.id,
+      );
+      if (notifInfo && notifInfo.memberIds.length > 0) {
+        const payload = {
+          messageId: newMessage.id,
+          channelId: notifInfo.channelId,
+          channelName: notifInfo.channelName,
+          serverId: notifInfo.serverId,
+          serverName: notifInfo.serverName,
+          senderId: user.id,
+          senderName: user.username,
+          contentPreview: createMessageDto.content.slice(0, 200),
+        };
+        const rooms = notifInfo.memberIds.map((id) => `user:${id}`);
+        this.server.to(rooms).emit('channelMessageNotification', payload);
+      }
+    } catch (err) {
+      console.warn('channelMessageNotification dispatch failed', err);
+    }
+
     return newMessage;
   }
 
@@ -105,7 +129,6 @@ export class MessagesGateway
     @MessageBody()
     data: CreateReactionDto,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const reactionMessage = await this.messagesService.reaction(
       data.messageId,
       data.emoji,
@@ -113,7 +136,7 @@ export class MessagesGateway
     );
     const roomName = `channel_${data.channelId}`;
     this.server.to(roomName).emit('reactionAdded', reactionMessage);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
     return reactionMessage;
   }
 

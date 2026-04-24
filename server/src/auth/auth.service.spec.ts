@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthService } from './auth.service';
 import { Users } from '../users/entities/users.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { PasswordResetToken } from './entities/password-reset-token.entity';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn().mockResolvedValue('hashed-token'),
@@ -29,6 +31,14 @@ const mockJwtService = {
   verifyAsync: jest.fn(),
 };
 
+const mockConfigService = {
+  get: jest.fn((key: string) => {
+    if (key === 'NODE_ENV') return 'test';
+    if (key === 'FRONTEND_URL') return 'http://localhost:3000';
+    return undefined;
+  }),
+};
+
 const mockUser = () => ({
   id: 1,
   email: 'user@test.com',
@@ -47,8 +57,13 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: JwtService, useValue: mockJwtService },
+        { provide: ConfigService, useValue: mockConfigService },
         { provide: getRepositoryToken(Users), useFactory: mockRepo },
         { provide: getRepositoryToken(RefreshToken), useFactory: mockRepo },
+        {
+          provide: getRepositoryToken(PasswordResetToken),
+          useFactory: mockRepo,
+        },
       ],
     }).compile();
 
@@ -88,19 +103,26 @@ describe('AuthService', () => {
       const user = { id: 1, email: 'u@u.com', username: 'u' } as any;
       const result = service.generateAccessToken(user);
       expect(result).toBe('mock-access-token');
-      expect(mockJwtService.sign).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
+      expect(mockJwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 1 }),
+      );
     });
   });
 
   describe('generateRefreshToken', () => {
     it('crée, sauvegarde et retourne le token UUID', async () => {
-      tokenRepo.create.mockReturnValue({ tokenHash: 'hashed-token', userId: 1 });
+      tokenRepo.create.mockReturnValue({
+        tokenHash: 'hashed-token',
+        userId: 1,
+      });
       tokenRepo.save.mockResolvedValue({});
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.generateRefreshToken(1);
       expect(result).toBe('test-uuid-token');
-      expect(tokenRepo.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 1 }));
+      expect(tokenRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 1 }),
+      );
       expect(tokenRepo.save).toHaveBeenCalled();
     });
   });
@@ -108,7 +130,9 @@ describe('AuthService', () => {
   describe('login', () => {
     it('lève Error si utilisateur non trouvé', async () => {
       userRepo.findOneBy.mockResolvedValue(undefined);
-      await expect(service.login({ id: 99 } as any)).rejects.toThrow('User not found');
+      await expect(service.login({ id: 99 } as any)).rejects.toThrow(
+        'User not found',
+      );
     });
 
     it('retourne TokenResponseDto avec access_token, refresh_token, expires_in', async () => {
@@ -118,7 +142,11 @@ describe('AuthService', () => {
       tokenRepo.create.mockReturnValue({});
       tokenRepo.save.mockResolvedValue({});
 
-      const result = await service.login({ id: 1, email: 'u@u.com', username: 'u' } as any);
+      const result = await service.login({
+        id: 1,
+        email: 'u@u.com',
+        username: 'u',
+      } as any);
       expect(result).toHaveProperty('access_token');
       expect(result).toHaveProperty('refresh_token');
       expect(result.expires_in).toBe(300);
@@ -129,7 +157,9 @@ describe('AuthService', () => {
     it('lève UnauthorizedException si aucun token ne correspond', async () => {
       tokenRepo.find.mockResolvedValue([]);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
-      await expect(service.refreshTokens('invalid-token')).rejects.toThrow(UnauthorizedException);
+      await expect(service.refreshTokens('invalid-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('lève UnauthorizedException si token expiré et le révoque', async () => {
@@ -143,7 +173,9 @@ describe('AuthService', () => {
       tokenRepo.save.mockResolvedValue({});
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      await expect(service.refreshTokens('some-token')).rejects.toThrow(UnauthorizedException);
+      await expect(service.refreshTokens('some-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
       expect(expiredToken.isRevoked).toBe(true);
     });
 

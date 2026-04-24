@@ -116,6 +116,7 @@ export class ServersService {
     targetUserId: number,
     reason?: string,
     durationHours?: number,
+    durationMinutes?: number,
   ) {
     if (requesterId === targetUserId) {
       throw new BadRequestException('Vous ne pouvez pas vous bannir vous-même');
@@ -171,9 +172,10 @@ export class ServersService {
       throw new BadRequestException('Cet utilisateur est déjà banni');
     }
 
-    const expiresAt = durationHours
-      ? new Date(Date.now() + durationHours * 60 * 60 * 1000)
-      : null;
+    const durationMs =
+      (durationHours ?? 0) * 60 * 60 * 1000 +
+      (durationMinutes ?? 0) * 60 * 1000;
+    const expiresAt = durationMs > 0 ? new Date(Date.now() + durationMs) : null;
 
     const ban = this.serverBanRepository.create({
       server: { id: serverId },
@@ -224,6 +226,19 @@ export class ServersService {
 
     await this.serverBanRepository.remove(ban);
 
+    const alreadyMember = await this.serverMemberRepository.findOne({
+      where: { server: { id: serverId }, members: { id: targetUserId } },
+    });
+
+    if (!alreadyMember) {
+      const member = this.serverMemberRepository.create({
+        server: { id: serverId },
+        members: { id: targetUserId },
+        role: ServerRole.Member,
+      });
+      await this.serverMemberRepository.save(member);
+    }
+
     return { success: true, message: 'Utilisateur débanni avec succès' };
   }
 
@@ -255,7 +270,9 @@ export class ServersService {
     });
 
     const now = new Date();
-    const expiredBans = allBans.filter((b) => b.expiresAt && b.expiresAt <= now);
+    const expiredBans = allBans.filter(
+      (b) => b.expiresAt && b.expiresAt <= now,
+    );
     if (expiredBans.length > 0) {
       await this.serverBanRepository.remove(expiredBans);
     }

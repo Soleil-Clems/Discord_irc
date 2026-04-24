@@ -7,9 +7,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FriendRequest, FriendRequestStatus } from './entities/friend-request.entity';
+import {
+  FriendRequest,
+  FriendRequestStatus,
+} from './entities/friend-request.entity';
 import { BlockedUser } from './entities/blocked-user.entity';
 import { Users } from '@/users/entities/users.entity';
+import { MessagesGateway } from '@/messages/messages.gateway';
 
 @Injectable()
 export class FriendsService {
@@ -30,14 +34,22 @@ export class FriendsService {
     private blockedUserRepository: Repository<BlockedUser>,
     @InjectRepository(Users)
     private usersRepository: Repository<Users>,
+    private readonly messagesGateway: MessagesGateway,
   ) {}
 
-  async sendRequest(senderId: number, receiverId: number): Promise<FriendRequest> {
+  async sendRequest(
+    senderId: number,
+    receiverId: number,
+  ): Promise<FriendRequest> {
     if (senderId === receiverId) {
-      throw new BadRequestException('Vous ne pouvez pas vous ajouter vous-même');
+      throw new BadRequestException(
+        'Vous ne pouvez pas vous ajouter vous-même',
+      );
     }
 
-    const receiver = await this.usersRepository.findOne({ where: { id: receiverId } });
+    const receiver = await this.usersRepository.findOne({
+      where: { id: receiverId },
+    });
     if (!receiver) throw new NotFoundException('Utilisateur non trouvé');
 
     // Vérifier si bloqué
@@ -47,7 +59,10 @@ export class FriendsService {
         { blocker: { id: receiverId }, blocked: { id: senderId } },
       ],
     });
-    if (isBlocked) throw new ForbiddenException('Impossible d\'envoyer une demande à cet utilisateur');
+    if (isBlocked)
+      throw new ForbiddenException(
+        "Impossible d'envoyer une demande à cet utilisateur",
+      );
 
     // Vérifier si déjà amis ou demande existante
     const existing = await this.friendRequestRepository.findOne({
@@ -68,44 +83,103 @@ export class FriendsService {
       receiver: { id: receiverId },
     });
 
-    return this.friendRequestRepository.save(request);
+    const saved = await this.friendRequestRepository.save(request);
+
+    try {
+      const sender = await this.usersRepository.findOne({
+        where: { id: senderId },
+        select: this.safeUserSelect,
+      });
+      if (sender) {
+        this.messagesGateway.server
+          .to(`user:${receiverId}`)
+          .emit('friendRequestReceived', {
+            requestId: saved.id,
+            senderId,
+            senderName: sender.firstname || sender.username,
+          });
+      }
+    } catch (err) {
+      console.warn('friendRequestReceived dispatch failed', err);
+    }
+
+    return saved;
   }
 
-  async acceptRequest(requestId: number, userId: number): Promise<FriendRequest> {
+  async acceptRequest(
+    requestId: number,
+    userId: number,
+  ): Promise<FriendRequest> {
     const request = await this.friendRequestRepository.findOne({
       where: { id: requestId },
       relations: ['sender', 'receiver'],
     });
 
     if (!request) throw new NotFoundException('Demande non trouvée');
-    if (request.receiver.id !== userId) throw new ForbiddenException('Action non autorisée');
+    if (request.receiver.id !== userId)
+      throw new ForbiddenException('Action non autorisée');
     if (request.status !== FriendRequestStatus.Pending) {
       throw new ConflictException('Cette demande a déjà été traitée');
     }
 
     request.status = FriendRequestStatus.Accepted;
-    return this.friendRequestRepository.save(request);
+    const saved = await this.friendRequestRepository.save(request);
+
+    try {
+      const accepter = await this.usersRepository.findOne({
+        where: { id: userId },
+        select: this.safeUserSelect,
+      });
+      if (accepter) {
+        this.messagesGateway.server
+          .to(`user:${request.sender.id}`)
+          .emit('friendRequestAccepted', {
+            requestId: saved.id,
+            accepterId: userId,
+            accepterName: accepter.firstname || accepter.username,
+          });
+      }
+    } catch (err) {
+      console.warn('friendRequestAccepted dispatch failed', err);
+    }
+
+    return saved;
   }
 
-  async declineRequest(requestId: number, userId: number): Promise<{ message: string }> {
+  async declineRequest(
+    requestId: number,
+    userId: number,
+  ): Promise<{ message: string }> {
     const request = await this.friendRequestRepository.findOne({
       where: { id: requestId },
       relations: ['sender', 'receiver'],
     });
 
     if (!request) throw new NotFoundException('Demande non trouvée');
-    if (request.receiver.id !== userId) throw new ForbiddenException('Action non autorisée');
+    if (request.receiver.id !== userId)
+      throw new ForbiddenException('Action non autorisée');
 
     await this.friendRequestRepository.remove(request);
 
     return { message: 'Demande refusée' };
   }
 
-  async removeFriend(userId: number, friendId: number): Promise<{ message: string }> {
+  async removeFriend(
+    userId: number,
+    friendId: number,
+  ): Promise<{ message: string }> {
     const friendship = await this.friendRequestRepository.findOne({
       where: [
-        { sender: { id: userId }, receiver: { id: friendId }, status: FriendRequestStatus.Accepted },
-        { sender: { id: friendId }, receiver: { id: userId }, status: FriendRequestStatus.Accepted },
+        {
+          sender: { id: userId },
+          receiver: { id: friendId },
+          status: FriendRequestStatus.Accepted,
+        },
+        {
+          sender: { id: friendId },
+          receiver: { id: userId },
+          status: FriendRequestStatus.Accepted,
+        },
       ],
     });
 
@@ -161,7 +235,10 @@ export class FriendsService {
     });
   }
 
-  async blockUser(blockerId: number, blockedId: number): Promise<{ message: string }> {
+  async blockUser(
+    blockerId: number,
+    blockedId: number,
+  ): Promise<{ message: string }> {
     if (blockerId === blockedId) {
       throw new BadRequestException('Action invalide');
     }
@@ -189,7 +266,10 @@ export class FriendsService {
     return { message: 'Utilisateur bloqué' };
   }
 
-  async unblockUser(blockerId: number, blockedId: number): Promise<{ message: string }> {
+  async unblockUser(
+    blockerId: number,
+    blockedId: number,
+  ): Promise<{ message: string }> {
     const block = await this.blockedUserRepository.findOne({
       where: { blocker: { id: blockerId }, blocked: { id: blockedId } },
     });

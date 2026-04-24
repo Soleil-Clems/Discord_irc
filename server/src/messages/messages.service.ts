@@ -18,7 +18,6 @@ import { ChannelType } from '@/channels/enums/channel-type.enum';
 import { MessageType } from './enums/message-type.enum';
 import { Reaction } from './entities/reaction.entity';
 
-
 @Injectable()
 export class MessagesService {
   constructor(
@@ -102,13 +101,37 @@ export class MessagesService {
 
     const message = this.messageRepository.create({
       content,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       type: MessageType.System,
       author: user,
       channel: channel,
     });
 
     return this.messageRepository.save(message);
+  }
+
+  async getChannelNotificationInfo(channelId: number, excludeUserId: number) {
+    const channel = await this.channelRepository.findOne({
+      where: { id: channelId },
+      relations: { server: true },
+    });
+    if (!channel) return null;
+
+    const rows = await this.serverMemberRepository
+      .createQueryBuilder('sm')
+      .leftJoin('sm.members', 'user')
+      .select('user.id', 'id')
+      .where('sm.serverId = :serverId', { serverId: channel.server.id })
+      .andWhere('user.id != :excludeUserId', { excludeUserId })
+      .getRawMany<{ id: number }>();
+
+    return {
+      channelId: channel.id,
+      channelName: channel.name,
+      serverId: channel.server.id,
+      serverName: channel.server.name,
+      memberIds: rows.map((r) => Number(r.id)),
+    };
   }
 
   async findAll(channelId: number, page: number = 1, limit: number = 50) {

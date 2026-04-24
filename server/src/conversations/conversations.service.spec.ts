@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConversationsService } from './conversations.service';
 import { Conversation } from './entities/conversation.entity';
@@ -20,7 +24,10 @@ const mockRepo = () => ({
     where: jest.fn().mockReturnThis(),
     orWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue([]),
+    getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
   })),
 });
 
@@ -56,18 +63,24 @@ describe('ConversationsService', () => {
 
   describe('createOrGet', () => {
     it('lève BadRequestException si même utilisateur', async () => {
-      await expect(service.createOrGet({ userId: 1 }, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrGet({ userId: 1 }, 1)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('lève NotFoundException si un utilisateur non trouvé', async () => {
       userRepo.findOneBy
         .mockResolvedValueOnce(user1)
         .mockResolvedValueOnce(undefined);
-      await expect(service.createOrGet({ userId: 2 }, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.createOrGet({ userId: 2 }, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('retourne la conversation existante', async () => {
-      userRepo.findOneBy.mockResolvedValueOnce(user1).mockResolvedValueOnce(user2);
+      userRepo.findOneBy
+        .mockResolvedValueOnce(user1)
+        .mockResolvedValueOnce(user2);
       const existing = { id: 1, user1, user2 };
       convRepo.findOne.mockResolvedValue(existing);
 
@@ -76,7 +89,9 @@ describe('ConversationsService', () => {
     });
 
     it('crée une nouvelle conversation si absente', async () => {
-      userRepo.findOneBy.mockResolvedValueOnce(user1).mockResolvedValueOnce(user2);
+      userRepo.findOneBy
+        .mockResolvedValueOnce(user1)
+        .mockResolvedValueOnce(user2);
       const newConv = { id: 1, user1, user2 };
       convRepo.findOne
         .mockResolvedValueOnce(undefined)
@@ -97,12 +112,16 @@ describe('ConversationsService', () => {
         where: jest.fn().mockReturnThis(),
         orWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(conversations),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+        getManyAndCount: jest.fn().mockResolvedValue([conversations, 1]),
       };
       convRepo.createQueryBuilder.mockReturnValue(qb);
 
       const result = await service.findAll(1);
-      expect(result).toEqual(conversations);
+      expect(result.conversations).toEqual(conversations);
+      expect(result.total).toEqual(1);
     });
   });
 
@@ -113,7 +132,11 @@ describe('ConversationsService', () => {
     });
 
     it('lève ForbiddenException si user non participant', async () => {
-      convRepo.findOne.mockResolvedValue({ id: 1, user1: { id: 3 }, user2: { id: 4 } });
+      convRepo.findOne.mockResolvedValue({
+        id: 1,
+        user1: { id: 3 },
+        user2: { id: 4 },
+      });
       await expect(service.findOne(1, 1)).rejects.toThrow(ForbiddenException);
     });
 
@@ -135,7 +158,9 @@ describe('ConversationsService', () => {
   describe('findMessages', () => {
     it('lève NotFoundException si conversation non trouvée', async () => {
       convRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.findMessages(1, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.findMessages(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('retourne les messages paginés inversés', async () => {
@@ -154,7 +179,9 @@ describe('ConversationsService', () => {
     it('lève NotFoundException si sender non trouvé', async () => {
       convRepo.findOne.mockResolvedValue({ id: 1, user1, user2 });
       userRepo.findOneBy.mockResolvedValue(undefined);
-      await expect(service.createMessage(1, { content: 'hi' } as any, 1)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.createMessage(1, { content: 'hi' } as any, 1),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('crée et retourne le message', async () => {
@@ -168,7 +195,11 @@ describe('ConversationsService', () => {
       msgRepo.findOne.mockResolvedValue({ ...msg, sender, conversation: conv });
       convRepo.save.mockResolvedValue(conv);
 
-      const result = await service.createMessage(1, { content: 'hi' } as any, 1);
+      const result = await service.createMessage(
+        1,
+        { content: 'hi' } as any,
+        1,
+      );
       expect(result).toHaveProperty('content', 'hi');
     });
   });
@@ -176,20 +207,37 @@ describe('ConversationsService', () => {
   describe('updateMessage', () => {
     it('lève NotFoundException si message non trouvé', async () => {
       msgRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.updateMessage(1, { content: 'new' } as any, 1)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateMessage(1, { content: 'new' } as any, 1),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('lève ForbiddenException si non expéditeur', async () => {
-      msgRepo.findOne.mockResolvedValue({ id: 1, sender: { id: 2 }, conversation: { user1, user2 } });
-      await expect(service.updateMessage(1, { content: 'new' } as any, 1)).rejects.toThrow(ForbiddenException);
+      msgRepo.findOne.mockResolvedValue({
+        id: 1,
+        sender: { id: 2 },
+        conversation: { user1, user2 },
+      });
+      await expect(
+        service.updateMessage(1, { content: 'new' } as any, 1),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('met à jour et retourne le message', async () => {
-      const msg = { id: 1, content: 'old', sender: { id: 1 }, conversation: { user1, user2 } };
+      const msg = {
+        id: 1,
+        content: 'old',
+        sender: { id: 1 },
+        conversation: { user1, user2 },
+      };
       msgRepo.findOne.mockResolvedValue(msg);
       msgRepo.save.mockResolvedValue({ ...msg, content: 'new' });
 
-      const result = await service.updateMessage(1, { content: 'new' } as any, 1);
+      const result = await service.updateMessage(
+        1,
+        { content: 'new' } as any,
+        1,
+      );
       expect(result.content).toBe('new');
     });
   });
@@ -197,34 +245,59 @@ describe('ConversationsService', () => {
   describe('removeMessage', () => {
     it('lève NotFoundException si message non trouvé', async () => {
       msgRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.removeMessage(1, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.removeMessage(1, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lève ForbiddenException si non expéditeur', async () => {
-      msgRepo.findOne.mockResolvedValue({ id: 1, sender: { id: 2 }, conversation: { id: 1, user1, user2 } });
-      await expect(service.removeMessage(1, 1)).rejects.toThrow(ForbiddenException);
+      msgRepo.findOne.mockResolvedValue({
+        id: 1,
+        sender: { id: 2 },
+        conversation: { id: 1, user1, user2 },
+      });
+      await expect(service.removeMessage(1, 1)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('supprime et retourne les infos', async () => {
-      const msg = { id: 1, sender: { id: 1 }, conversation: { id: 5, user1, user2 } };
+      const msg = {
+        id: 1,
+        sender: { id: 1 },
+        conversation: { id: 5, user1, user2 },
+      };
       msgRepo.findOne.mockResolvedValue(msg);
       msgRepo.remove.mockResolvedValue(msg);
 
       const result = await service.removeMessage(1, 1);
-      expect(result).toEqual({ success: true, messageId: 1, conversationId: 5, user1Id: 1, user2Id: 2 });
+      expect(result).toEqual({
+        success: true,
+        messageId: 1,
+        conversationId: 5,
+        user1Id: 1,
+        user2Id: 2,
+      });
     });
   });
 
   describe('reaction', () => {
     it('lève NotFoundException si message non trouvé', async () => {
       msgRepo.findOne.mockResolvedValue(undefined);
-      await expect(service.reaction(1, '👍', 1)).rejects.toThrow(NotFoundException);
+      await expect(service.reaction(1, '👍', 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('lève NotFoundException si user non trouvé', async () => {
-      msgRepo.findOne.mockResolvedValueOnce({ id: 1, conversation: { user1, user2 } });
+      msgRepo.findOne.mockResolvedValueOnce({
+        id: 1,
+        conversation: { user1, user2 },
+      });
       userRepo.findOneBy.mockResolvedValue(undefined);
-      await expect(service.reaction(1, '👍', 1)).rejects.toThrow(NotFoundException);
+      await expect(service.reaction(1, '👍', 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('supprime la réaction existante (toggle off)', async () => {

@@ -10,6 +10,8 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import type { Response } from 'express';
 import { LocalAuthGuard } from './guards/local.auth.guard';
 import { AuthService } from './auth.service';
@@ -146,6 +148,22 @@ export class AuthController {
     res.clearCookie('refresh_token');
 
     return this.authService.logoutAll(userId);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto.email);
+    return {
+      message: 'Si cet email existe, un lien de réinitialisation a été envoyé',
+    };
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto.token, dto.password);
+    return { message: 'Mot de passe réinitialisé avec succès' };
   }
 
   @UseGuards(JwtAuthGuard)

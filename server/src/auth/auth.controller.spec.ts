@@ -2,16 +2,34 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
+import { OtpService } from '@/otp/otp.service';
 
 const mockAuthService = {
-  login: jest.fn().mockResolvedValue({ access_token: 'tok', refresh_token: 'ref', expires_in: 300, user: { id: 1 } }),
-  refreshTokens: jest.fn().mockResolvedValue({ access_token: 'tok', expires_in: 300, user: { id: 1 } }),
+  login: jest.fn().mockResolvedValue({
+    access_token: 'tok',
+    refresh_token: 'ref',
+    expires_in: 300,
+    user: { id: 1 },
+  }),
+  refreshTokens: jest.fn().mockResolvedValue({
+    access_token: 'tok',
+    expires_in: 300,
+    user: { id: 1 },
+  }),
   logout: jest.fn().mockResolvedValue({ message: 'Déconnexion réussie' }),
-  logoutAll: jest.fn().mockResolvedValue({ message: 'Déconnexion de tous les appareils réussie' }),
+  logoutAll: jest.fn().mockResolvedValue({
+    message: 'Déconnexion de tous les appareils réussie',
+  }),
 };
 
 const mockUsersService = {
   findOne: jest.fn().mockResolvedValue({ id: 1, username: 'u' }),
+};
+
+const mockOtpService = {
+  generateAndSend: jest.fn(),
+  verify: jest.fn(),
+  resend: jest.fn(),
 };
 
 describe('AuthController', () => {
@@ -23,6 +41,7 @@ describe('AuthController', () => {
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: UsersService, useValue: mockUsersService },
+        { provide: OtpService, useValue: mockOtpService },
       ],
     }).compile();
 
@@ -39,7 +58,11 @@ describe('AuthController', () => {
       const res = { cookie: jest.fn() };
       const result = await controller.login(req as any, res as any);
       expect(mockAuthService.login).toHaveBeenCalledWith(req.user);
-      expect(res.cookie).toHaveBeenCalledWith('refresh_token', 'ref', expect.any(Object));
+      expect(res.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        'ref',
+        expect.any(Object),
+      );
       expect(result).toHaveProperty('access_token');
       expect(result).not.toHaveProperty('refresh_token');
     });
@@ -49,7 +72,10 @@ describe('AuthController', () => {
     it('retourne 401 si refresh_token absent', async () => {
       const req = { cookies: {} };
       const result = await controller.refresh(req as any);
-      expect(result).toEqual({ message: 'Refresh token manquant', statusCode: 401 });
+      expect(result).toEqual({
+        message: 'Refresh token manquant',
+        statusCode: 401,
+      });
     });
 
     it('appelle authService.refreshTokens si token présent', async () => {

@@ -90,7 +90,6 @@ export class DmsController {
 
   @Get('/signed-url/:key')
   getSignedUrl(@Param('key') key: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.dmsService.getSignedUrl(key);
   }
 }
