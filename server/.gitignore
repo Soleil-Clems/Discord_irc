@@ -3,3 +3,4 @@ node_modules
 /.docker/.env
 dist
 coverage
+package-lock.json

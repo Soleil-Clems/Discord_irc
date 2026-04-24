@@ -6,6 +6,7 @@ import { Message } from './entities/message.entity';
 import { Channel } from '../channels/entities/channel.entity';
 import { Users } from '../users/entities/users.entity';
 import { Reaction } from './entities/reaction.entity';
+import { Mention } from './entities/mention.entity';
 import { ServerMember } from '../servers/entities/server-member.entity';
 import { ChannelType } from '../channels/enums/channel-type.enum';
 import { ServerRole } from '../servers/enums/server-role.enum';
@@ -14,6 +15,7 @@ import { MessageType } from './enums/message-type.enum';
 const mockRepo = () => ({
   findOne: jest.fn(),
   find: jest.fn(),
+  findBy: jest.fn(),
   findAndCount: jest.fn(),
   findOneBy: jest.fn(),
   save: jest.fn(),
@@ -38,6 +40,7 @@ describe('MessagesService', () => {
         { provide: getRepositoryToken(Users), useFactory: mockRepo },
         { provide: getRepositoryToken(Reaction), useFactory: mockRepo },
         { provide: getRepositoryToken(ServerMember), useFactory: mockRepo },
+        { provide: getRepositoryToken(Mention), useFactory: mockRepo },
       ],
     }).compile();
 
@@ -104,8 +107,10 @@ describe('MessagesService', () => {
       channelRepo.findOne.mockResolvedValue(channel);
       memberRepo.findOne.mockResolvedValue({ id: 1 });
       userRepo.findOneBy.mockResolvedValue(user);
+      userRepo.findBy.mockResolvedValue([]);
       messageRepo.create.mockReturnValue(message);
       messageRepo.save.mockResolvedValue(message);
+      messageRepo.findOne.mockResolvedValue(message);
 
       const result = await service.create(dto as any, 1);
       expect(result).toEqual(message);
