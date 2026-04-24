@@ -1,5 +1,6 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
   Post,
   Body,
@@ -14,6 +15,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   Query,
+  Request,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -150,6 +152,49 @@ export class UsersController {
 
     const updateDto: UpdateUserDto = {
       img: uploadResult.url,
+    };
+
+    return await this.usersService.update(id, updateDto);
+  }
+
+  @UseInterceptors(FileInterceptor('file'))
+  @Patch('banner/:id')
+  async updateBanner(
+    @Request() req,
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }),
+    )
+    id: number,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MimeTypeValidator({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            mimeTypes: ALLOWED_MIME_TYPES.img as any,
+          }),
+          new MaxFileSizeValidator({
+            maxSize: MAX_FILE_SIZE,
+            message: 'Image is too large. Max file size is 10MB',
+          }),
+        ],
+        fileIsRequired: true,
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    if (req.user?.id !== id) {
+      throw new ForbiddenException('You can only update your own banner');
+    }
+
+    const uploadResult = await this.dmsService.uploadSingleFile({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      file,
+      category: FileCategory.Image,
+    });
+
+    const updateDto: UpdateUserDto = {
+      banner: uploadResult.url,
     };
 
     return await this.usersService.update(id, updateDto);

@@ -35,6 +35,9 @@ export class Users {
   @Column({ length: 500, nullable: true })
   img: string;
 
+  @Column({ length: 500, nullable: true })
+  banner: string;
+
   @Column({ nullable: true })
   description: string;
 
