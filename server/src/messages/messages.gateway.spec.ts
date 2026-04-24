@@ -9,6 +9,8 @@ const mockMessagesService = {
   update: jest.fn(),
   reaction: jest.fn(),
   remove: jest.fn(),
+  getMentionedUserIds: jest.fn().mockResolvedValue([]),
+  getChannelNotificationInfo: jest.fn().mockResolvedValue(null),
 };
 
 const mockJwtService = {

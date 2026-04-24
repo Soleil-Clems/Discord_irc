@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { Message } from './entities/message.entity';
 import { Channel } from '@/channels/entities/channel.entity';
@@ -17,6 +17,7 @@ import { UpdateMessageDto } from './dto/update-message.dto';
 import { ChannelType } from '@/channels/enums/channel-type.enum';
 import { MessageType } from './enums/message-type.enum';
 import { Reaction } from './entities/reaction.entity';
+import { Mention } from './entities/mention.entity';
 
 @Injectable()
 export class MessagesService {
@@ -35,6 +36,9 @@ export class MessagesService {
 
     @InjectRepository(ServerMember)
     private readonly serverMemberRepository: Repository<ServerMember>,
+
+    @InjectRepository(Mention)
+    private readonly mentionRepository: Repository<Mention>,
   ) {}
 
   async create(createMessageDto: CreateMessageDto, userId: number) {
@@ -70,14 +74,58 @@ export class MessagesService {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
-    const message = this.messageRepository.create({
-      content: createMessageDto.content,
-      type: createMessageDto.type,
-      author: user,
-      channel: channel,
-    });
+    const usernames = [
+      ...createMessageDto.content.matchAll(/(?<!\w)@(\w+)/g),
+    ].map((m) => m[1]);
 
-    return this.messageRepository.save(message);
+    let allowedMentions: Users[] = [];
+    if (usernames.length > 0) {
+      const mentionedUsers = await this.userRepository.findBy({
+        username: In(usernames),
+      });
+
+      if (mentionedUsers.length > 0) {
+        const members = await this.serverMemberRepository.find({
+          where: {
+            server: { id: channel.server.id },
+            members: { id: In(mentionedUsers.map((u) => u.id)) },
+          },
+          relations: { members: true },
+        });
+        const memberIds = new Set(members.map((m) => m.members.id));
+        allowedMentions = mentionedUsers.filter((u) => memberIds.has(u.id));
+      }
+    }
+
+    const savedId = await this.messageRepository.manager.transaction(
+      async (manager) => {
+        const savedMessage = await manager.save(
+          manager.create(Message, {
+            content: createMessageDto.content,
+            type: createMessageDto.type,
+            author: user,
+            channel: channel,
+          }),
+        );
+
+        if (allowedMentions.length > 0) {
+          const mentions = allowedMentions.map((mentionedUser) =>
+            manager.create(Mention, {
+              user: mentionedUser,
+              message: savedMessage,
+            }),
+          );
+          await manager.save(mentions);
+        }
+
+        return savedMessage.id;
+      },
+    );
+
+    return this.messageRepository.findOne({
+      where: { id: savedId },
+      relations: { author: true, reactions: true, mentions: { user: true } },
+    });
   }
 
   async createSystemMessage(
@@ -140,7 +188,11 @@ export class MessagesService {
 
     const [messages, total] = await this.messageRepository.findAndCount({
       where: { channel: { id: channelId } },
-      relations: { author: true, reactions: { author: true } },
+      relations: {
+        author: true,
+        reactions: { author: true },
+        mentions: { user: true },
+      },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
